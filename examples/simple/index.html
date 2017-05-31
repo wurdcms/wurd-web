@@ -1,0 +1,35 @@
+<html>
+<head>
+  <script src="/dist/wurd.min.js"></script>
+
+  <!-- Optional file for rendering Markdown content -->
+  <script src="https://unpkg.com/marked@0.3.6"></script>
+</head>
+<body>
+  <img data-wurd-img="simple.image" height="200" />
+
+  <h1 data-wurd="simple.title"></h1>
+
+  <div data-wurd-md="simple.intro"></div>
+
+
+  <script>
+    var $ = document.querySelector.bind(document);
+    var markdown = marked;
+
+    var client = wurd.connect('example', {
+      editMode: 'querystring' //Add ?edit to the page's querystring to activate editing mode
+    });
+
+    client.load('simple,common')
+      .then(function(content) {
+        $('[data-wurd="simple.title"]').innerHTML = client.get('simple.title');
+        $('[data-wurd-md="simple.intro"]').innerHTML = markdown(client.get('simple.intro'));
+        $('[data-wurd-img="simple.image"]').src = client.get('simple.image');
+      })
+      .catch(function(err) {
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
