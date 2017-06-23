@@ -4,7 +4,7 @@
  * It exports the client instance so it can be used elsewhere in the app.
  */
 
-import Wurd from '../../dist/wurd';
+import Wurd from '../../dist/wurd'; //In your app, import from 'wurd-web'
 
 
 const wurdClient = Wurd.connect('example', {
