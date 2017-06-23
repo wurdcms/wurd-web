@@ -161,6 +161,8 @@ var _getPropertyValue2 = _interopRequireDefault(_getPropertyValue);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var config = {
   widgetUrl: 'https://edit-v3.wurd.io/widget.js',
   apiUrl: 'https://api-v3.wurd.io'
@@ -402,6 +404,21 @@ var connect = function connect(appName) {
     },
 
     get: createTextHelper(_allContent, options),
+
+    map: function map(path, fn) {
+      // Get list content, defaulting to backup with the template
+      var listContent = (0, _getPropertyValue2.default)(_allContent, path) || _defineProperty({}, Date.now(), {});
+      var index = 0;
+
+      return Object.keys(listContent).map(function (id) {
+        var item = listContent[id];
+        var currentIndex = index;
+
+        index++;
+
+        return fn(item, [path, id].join('.'), currentIndex);
+      });
+    },
 
     startEditor: startEditor.bind(null, appName, options)
   };

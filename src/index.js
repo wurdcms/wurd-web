@@ -245,6 +245,21 @@ const connect = function(appName, options = {}) {
 
     get: createTextHelper(_allContent, options),
 
+    map: function(path, fn) {
+      // Get list content, defaulting to backup with the template
+      let listContent = get(_allContent, path) || { [Date.now()]: {} };
+      let index = 0;
+
+      return Object.keys(listContent).map(id => {
+        let item = listContent[id];
+        let currentIndex = index;
+
+        index++;
+
+        return fn(item, [path, id].join('.'), currentIndex);
+      });
+    },
+
     startEditor: startEditor.bind(null, appName, options)
   };
 };
