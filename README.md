@@ -19,3 +19,8 @@ wurd.load('homepage,common')
 ```
 npm install wurd-web
 ```
+
+## Run examples
+```
+npm run examples
+```
