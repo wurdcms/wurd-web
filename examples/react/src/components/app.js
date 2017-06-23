@@ -8,7 +8,7 @@ class App extends Component {
       <div>
         <h1><Text id="react.title" /></h1>
 
-        <Text id="react.intro" markdown />
+        <Text id="react.intro" markdown vars={{name: 'John'}} />
       </div>
     );
   }

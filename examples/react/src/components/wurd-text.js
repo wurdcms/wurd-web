@@ -7,6 +7,15 @@ import wurd from '../wurd';
 const WurdText = ({id, vars, markdown}) => {
   let text = wurd.get(id, vars);
 
+  //Replace variables with {{mustache}} style tags
+  if (vars) {
+    Object.keys(vars).forEach(key => {
+      let val = vars[key];
+
+      text = text.replace(`{{${key}}}`, val);
+    });
+  }
+
   if (markdown && text) { //Check for text first to prevent markdown error
     return (
       <div 
