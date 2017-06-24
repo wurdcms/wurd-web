@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import wurd from '../wurd';
-import Text from './wurd-text';
-import List from './wurd-list';
+import {Text, Image, List} from './wurd';
 
 
 class App extends Component {
@@ -9,6 +8,14 @@ class App extends Component {
   render() {
     return (
       <div>
+        <Image id="simple.image" width="100%" />
+
+        <h1><Text id="simple.title" /></h1>
+
+        <Text id="simple.intro" markdown />
+
+        <hr />
+
         <h1><Text id="react.title" /></h1>
 
         <Text id="react.intro" markdown vars={{name: 'John'}} />

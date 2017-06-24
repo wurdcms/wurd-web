@@ -24,3 +24,10 @@ npm install wurd-web
 ```
 npm run examples
 ```
+
+
+## API
+
+### connect()
+
+### 

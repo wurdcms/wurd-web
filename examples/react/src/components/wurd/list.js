@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'proptypes';
-import wurd from '../wurd';
+import wurd from '../../wurd';
 
 
 const WurdList = ({id, children}) => {

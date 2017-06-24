@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'proptypes';
 import marked from 'marked';
-import wurd from '../wurd';
+import wurd from '../../wurd';
 
 
 const WurdText = ({id, sid, type, vars, markdown}) => {

@@ -13,7 +13,7 @@ import wurd from './wurd';
 
 // Load initial content (e.g. app name, titles etc.)
 // Additional content can be loaded later as required; for example loading content by page
-wurd.load('react')
+wurd.load('simple,react')
   .then(content => {
     ReactDOM.render(<App />, document.getElementById('root'));
   })
