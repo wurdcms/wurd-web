@@ -56,16 +56,20 @@ class Wurd {
     let {appName, options} = this;
 
     return new Promise((resolve, reject) => {
+      if (!appName) {
+        return reject('Use wurd.connect(appName) before wurd.load()');
+      }
+
       // Return cached version if available
       let sectionContent = this.content[path];
 
       if (sectionContent) {
-        console.info('from cache: ', path);
+        options.log && console.info('from cache: ', path);
         return resolve(sectionContent);
       }
 
       // No cached version; fetch from server
-      console.info('from server: ', path);
+      options.log && console.info('from server: ', path);
 
       const params = encodeQueryString(options);
       const url = `${API_URL}/apps/${appName}/content/${path}?${params}`;

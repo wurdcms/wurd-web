@@ -254,16 +254,20 @@ var Wurd = function () {
 
 
       return new Promise(function (resolve, reject) {
+        if (!appName) {
+          return reject('Use wurd.connect() before wurd.load()');
+        }
+
         // Return cached version if available
         var sectionContent = _this.content[path];
 
         if (sectionContent) {
-          console.info('from cache: ', path);
+          options.log && console.info('from cache: ', path);
           return resolve(sectionContent);
         }
 
         // No cached version; fetch from server
-        console.info('from server: ', path);
+        options.log && console.info('from server: ', path);
 
         var params = (0, _utils.encodeQueryString)(options);
         var url = API_URL + '/apps/' + appName + '/content/' + path + '?' + params;
