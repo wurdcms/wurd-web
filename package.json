@@ -33,7 +33,7 @@
     "content",
     "browser"
   ],
-  "author": "Charlie Davison",
+  "author": "Charles Davison",
   "license": "MIT",
   "dependencies": {
     "get-property-value": "2.0.0"
