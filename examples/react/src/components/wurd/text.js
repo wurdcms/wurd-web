@@ -1,14 +1,14 @@
 import React from 'react';
-import PropTypes from 'proptypes';
+import PropTypes from 'prop-types';
 import marked from 'marked';
-import wurd from '../../wurd';
+import wurd from '../../../../dist/wurd';
 
 
 const WurdText = ({id, sid, type, vars, markdown}) => {
   let text = wurd.get(id);
 
   //Replace variables with {{mustache}} style tags
-  if (vars) {
+  if (text && vars) {
     Object.keys(vars).forEach(key => {
       let val = vars[key];
 

@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import wurd from '../wurd';
 import {Text, Image, List} from './wurd';
 
 

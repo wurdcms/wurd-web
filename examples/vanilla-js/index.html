@@ -1,6 +1,6 @@
 <html>
 <head>
-  <script src="/dist/wurd.min.js"></script> <!-- Change to point to a file on your site or a CDN -->
+  <script src="../dist/wurd.min.js"></script> <!-- Change to point to a file on your site or a CDN -->
 
   <!-- Optional file for rendering Markdown content -->
   <script src="https://unpkg.com/marked@0.3.6"></script>
@@ -17,18 +17,15 @@
     var $ = document.querySelector.bind(document);
     var markdown = marked;
 
-    var client = wurd.connect('example', {
+    wurd.connect('example', {
       editMode: 'querystring' //Add ?edit to the page's querystring to activate editing mode
     });
 
-    client.load('simple,common')
+    wurd.load('simple,common')
       .then(function(content) {
-        $('[data-wurd="simple.title"]').innerHTML = client.get('simple.title');
-        $('[data-wurd-md="simple.intro"]').innerHTML = markdown(client.get('simple.intro'));
-        $('[data-wurd-img="simple.image"]').src = client.get('simple.image');
-      })
-      .catch(function(err) {
-        console.error(err);
+        $('[data-wurd="simple.title"]').innerHTML = wurd.get('simple.title');
+        $('[data-wurd-md="simple.intro"]').innerHTML = markdown(wurd.get('simple.intro'));
+        $('[data-wurd-img="simple.image"]').src = wurd.get('simple.image');
       });
   </script>
 </body>

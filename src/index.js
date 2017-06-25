@@ -1,273 +1,150 @@
 import get from 'get-property-value';
+import {encodeQueryString} from './utils';
 
 
-const config = {
-  widgetUrl: 'https://edit-v3.wurd.io/widget.js',
-  apiUrl: 'https://api-v3.wurd.io'
-};
+const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
+const API_URL = 'https://api-v3.wurd.io';
 
 
-const encodeQuerystring = function(data) {
-  /*
-  let parts = map(data, (value, key) => {
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-  */
+class Wurd {
 
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
+  constructor() {
+    this.appName = null;
+    this.options = {};
 
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-
-  return parts.join('&');
-};
-
-
-const startEditor = function(appName, options = {}) {
-  var script = document.createElement('script');
-
-  script.src = config.widgetUrl;
-  script.async = true;
-  script.setAttribute('data-app', appName);
-
-  if (options.lang) {
-    script.setAttribute('data-lang', options.lang);
+    // Object to store all content that's loaded
+    this.content = {};
   }
 
-  document.getElementsByTagName('body')[0].appendChild(script);
-};
-
-
-/**
- * Creates the text helper for getting text by path
- *
- * @param {Object} content
- * @param {Object} options
- *
- * @return {Function}
- */
-const createTextHelper = function(content, options = {}) {
   /**
-   * Gets text, falling to backup content if not defined
+   * Sets up the default connection/instance
    *
-   * @param {String} path
-   * @param {String} [backup]
+   * @param {String} appName
+   * @param {Object} [options]
+   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+   * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
    */
-  return function textHelper(path, backup) {
+  connect(appName, options) {
+    this.appName = appName;
+    this.options = Object.assign({}, options);
+
+    // Activate edit mode if required
+    switch (this.options.editMode) {
+      // Edit mode always on
+      case true:
+        this.startEditor();
+        break;
+
+      // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
+      case 'querystring':
+        if (/[?&]edit(&|$)/.test(location.search)) {
+          this.startEditor();
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Loads a section of content so that it's items are ready to be accessed with #get(id)
+   *
+   * @param {String} path     Section path e.g. `section`
+   */
+  load(path) {
+    let {appName, options} = this;
+
+    return new Promise((resolve, reject) => {
+      // Return cached version if available
+      let sectionContent = this.content[path];
+
+      if (sectionContent) {
+        console.info('from cache: ', path);
+        return resolve(sectionContent);
+      }
+
+      // No cached version; fetch from server
+      console.info('from server: ', path);
+
+      const params = encodeQueryString(options);
+      const url = `${API_URL}/apps/${appName}/content/${path}?${params}`;
+
+      return fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`Error loading ${path}: ${res.statusText}`);
+
+          return res.json()
+            .then(sectionContent => {
+              // Cache for next time
+              // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
+              Object.assign(this.content, sectionContent);
+
+              resolve(sectionContent);
+            });
+        });
+    });
+  }
+
+  /**
+   * Gets a content item by path (e.g. `section.item`)
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   * @param {String} [backup]   Backup content to display if there is no item content
+   */
+  get(path, backup) {
+    let {options, content} = this;
+
     if (options.draft) {
       backup = (typeof backup !== 'undefined') ? backup : `[${path}]`;
     }
 
     return get(content, path) || backup;
-  };
-};
+  }
 
-
-/**
- * Creates the list helper for iterating over list items
- *
- * @param {Object} content
- *
- * @return {Function}
- */
-const createListHelper = function(content) {
   /**
-   * Runs a function for each item in a list with signature ({ item, id })
+   * Invokes a function on every content item in a list.
    *
-   * @param {String} path
-   * @param {Object|String[]} template
-   * @param {Function} fn
+   * @param {String} path     Item path e.g. `section.item`
+   * @param {Function} fn     Function to invoke
    */
-  return function listHelper(path, template, fn) {
-    // Create backup content for an empty list, so that inputs are displayed
-    let backup;
+  map(path, fn) {
+    let {content} = this;
 
-    // Support passing in an array of child item names as a shortcut
-    if (Array.isArray(template)) {
-      backup = template.reduce((memo, child) => {
-        memo[child] = `[${child}]`;
-        return memo;
-      }, {});
-    } else {
-      backup = template;
-    }
+    // Get list content, defaulting to backup with the template
+    let listContent = get(content, path) || { [Date.now()]: {} };
+    let index = 0;
 
-    // Get list content, defaulting to backup with a template
-    let listContent = get(content, path);
-
-    if (!listContent) {
-      listContent = {
-        '0': backup
-      };
-    }
-
-
-    let i = 0;
-
-    /*
-    return each(listContent, (item, id) => {
-      let itemWithDefaults = Object.assign({}, backup, item);
-
-      fn(itemWithDefaults, [path, id].join('.'), i);
-
-      i++;
-    });
-    */
-    return Object.keys(listContent).each(id => {
+    return Object.keys(listContent).map(id => {
       let item = listContent[id];
-      let itemWithDefaults = Object.assign({}, backup, item);
+      let currentIndex = index;
 
-      fn(itemWithDefaults, [path, id].join('.'), i);
+      index++;
 
-      i++;
+      return fn(item, [path, id].join('.'), currentIndex);
     });
-  };
-};
-
-
-
-/**
- * Loads a given section's content
- *
- * @param {String} appName
- * @param {String} path
- * @param {Object} [options]
- * @param {Boolean} [options.draft]
- * @param {Function} cb               Callback({Error} err, {Object} content, {Function} t)
- */
-const load = function(appName, path, options = {}, cb) {
-  // Normalise arguments
-  if (arguments.length === 3) { // appName, path, cb
-    cb = options;
-    options = {};
   }
 
-  let params = encodeQuerystring(options);
+  startEditor() {
+    let {appName, options} = this;
 
-  let url = `${config.apiUrl}/apps/${appName}/content/${path}?${params}`;
+    // Draft mode is always on if in edit mode
+    this.options.draft = true;
 
-  fetch(url)
-    .then(res => {
-      if (!res.ok) return cb(new Error(`Error loading ${path}: ${res.statusText}`));
+    let script = document.createElement('script');
 
-      return res.json()
-        .then(content => {
-          let helpers = {
-            text: createTextHelper(content, options),
-            list: createListHelper(content, options)
-          };
+    script.src = WIDGET_URL;
+    script.async = true;
+    script.setAttribute('data-app', appName);
 
-          cb(null, content, helpers);
-        })
-        .catch(err => {
-          cb(err);
-        });
-    })
-    .catch(err => {
-      cb(err);
-    });
-};
+    if (options.lang) {
+      script.setAttribute('data-lang', options.lang);
+    }
 
-
-/**
- * Creates an client with methods bound to the app and options provided
- *
- * @param {String} appName
- * @param {Object} [options]
- * @param {Boolean} [options.draft]
- * @param {Function} cb               Callback({Error} err, {Object} content, {Function} t)
- */
-const connect = function(appName, options = {}) {
-  // Prevent mutating original options object
-  options = Object.assign({}, options);
-
-  // Object to store all content that's loaded
-  let _allContent = {};
-
-  const _startEditor = function() {
-    // Turn draft mode on when in edit mode
-    options.draft = true;
-
-    startEditor(appName, options);
-  };
-
-  switch (options.editMode) {
-    // Edit mode always on
-    case true:
-      _startEditor();
-      break;
-
-    // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
-    case 'querystring':
-      if (/[?&]edit(&|$)/.test(location.search)) {
-        _startEditor();
-      }
-      break;
-
-    default:
-      break;
+    document.getElementsByTagName('body')[0].appendChild(script);
   }
 
-  return {
-    load: function(path, cb = function() {}) {
-      return new Promise((resolve, reject) => {
-        // Return cached version if available
-        if (_allContent[path]) {
-          let content = _allContent[path];
-          // console.info('from cache: ', path);
-
-          resolve(content);
-          cb(null, content);
-
-          return;
-        }
-
-        // No cached version; fetch from server
-        // console.info('from server: ', path);
-
-        load(appName, path, options, (err, content) => {
-          if (err) {
-            reject(err);
-            cb(err);
-          } else {
-            // Cache for next time
-            // _allContent[path] = content;
-            // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-            Object.assign(_allContent, content);
-
-            resolve(content);
-            cb(null, content);
-          }
-        });
-      });
-    },
-
-    get: createTextHelper(_allContent, options),
-
-    map: function(path, fn) {
-      // Get list content, defaulting to backup with the template
-      let listContent = get(_allContent, path) || { [Date.now()]: {} };
-      let index = 0;
-
-      return Object.keys(listContent).map(id => {
-        let item = listContent[id];
-        let currentIndex = index;
-
-        index++;
-
-        return fn(item, [path, id].join('.'), currentIndex);
-      });
-    },
-
-    startEditor: startEditor.bind(null, appName, options)
-  };
 };
 
 
-
-export default {
-  connect,
-  load,
-  startEditor
-};
+export default new Wurd();

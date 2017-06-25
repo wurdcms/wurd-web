@@ -73,11 +73,31 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var encodeQueryString = exports.encodeQueryString = function encodeQueryString(data) {
+  var parts = Object.keys(data).map(function (key) {
+    var value = data[key];
+
+    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
+  });
+
+  return parts.join('&');
+};
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89,8 +109,8 @@ max-len: ["error", 80]
 */
 
 
-var isObject = __webpack_require__(3);
-var some = __webpack_require__(1);
+var isObject = __webpack_require__(4);
+var some = __webpack_require__(2);
 
 module.exports = getPropertyValue;
 
@@ -114,7 +134,7 @@ function getPropertyValue(obj, path) {
 }
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -143,7 +163,7 @@ function some(arr, fn) {
 }
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -155,259 +175,149 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _getPropertyValue = __webpack_require__(0);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _getPropertyValue = __webpack_require__(1);
 
 var _getPropertyValue2 = _interopRequireDefault(_getPropertyValue);
+
+var _utils = __webpack_require__(0);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var config = {
-  widgetUrl: 'https://edit-v3.wurd.io/widget.js',
-  apiUrl: 'https://api-v3.wurd.io'
-};
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var encodeQuerystring = function encodeQuerystring(data) {
-  /*
-  let parts = map(data, (value, key) => {
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-  */
+var WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
+var API_URL = 'https://api-v3.wurd.io';
 
-  var parts = Object.keys(data).map(function (key) {
-    var value = data[key];
+var Wurd = function () {
+  function Wurd() {
+    _classCallCheck(this, Wurd);
 
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
+    this.appName = null;
+    this.options = {};
 
-  return parts.join('&');
-};
-
-var startEditor = function startEditor(appName) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-  var script = document.createElement('script');
-
-  script.src = config.widgetUrl;
-  script.async = true;
-  script.setAttribute('data-app', appName);
-
-  if (options.lang) {
-    script.setAttribute('data-lang', options.lang);
+    // Object to store all content that's loaded
+    this.content = {};
   }
 
-  document.getElementsByTagName('body')[0].appendChild(script);
-};
-
-/**
- * Creates the text helper for getting text by path
- *
- * @param {Object} content
- * @param {Object} options
- *
- * @return {Function}
- */
-var createTextHelper = function createTextHelper(content) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
   /**
-   * Gets text, falling to backup content if not defined
+   * Sets up the default connection/instance
    *
-   * @param {String} path
-   * @param {String} [backup]
+   * @param {String} appName
+   * @param {Object} [options]
+   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+   * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
    */
-  return function textHelper(path, backup) {
-    if (options.draft) {
-      backup = typeof backup !== 'undefined' ? backup : '[' + path + ']';
-    }
 
-    return (0, _getPropertyValue2.default)(content, path) || backup;
-  };
-};
 
-/**
- * Creates the list helper for iterating over list items
- *
- * @param {Object} content
- *
- * @return {Function}
- */
-var createListHelper = function createListHelper(content) {
-  /**
-   * Runs a function for each item in a list with signature ({ item, id })
-   *
-   * @param {String} path
-   * @param {Object|String[]} template
-   * @param {Function} fn
-   */
-  return function listHelper(path, template, fn) {
-    // Create backup content for an empty list, so that inputs are displayed
-    var backup = void 0;
+  _createClass(Wurd, [{
+    key: 'connect',
+    value: function connect(appName, options) {
+      this.appName = appName;
+      this.options = _extends({}, options);
 
-    // Support passing in an array of child item names as a shortcut
-    if (Array.isArray(template)) {
-      backup = template.reduce(function (memo, child) {
-        memo[child] = '[' + child + ']';
-        return memo;
-      }, {});
-    } else {
-      backup = template;
-    }
+      // Activate edit mode if required
+      switch (this.options.editMode) {
+        // Edit mode always on
+        case true:
+          this.startEditor();
+          break;
 
-    // Get list content, defaulting to backup with a template
-    var listContent = (0, _getPropertyValue2.default)(content, path);
+        // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
+        case 'querystring':
+          if (/[?&]edit(&|$)/.test(location.search)) {
+            this.startEditor();
+          }
+          break;
 
-    if (!listContent) {
-      listContent = {
-        '0': backup
-      };
-    }
-
-    var i = 0;
-
-    /*
-    return each(listContent, (item, id) => {
-      let itemWithDefaults = Object.assign({}, backup, item);
-       fn(itemWithDefaults, [path, id].join('.'), i);
-       i++;
-    });
-    */
-    return Object.keys(listContent).each(function (id) {
-      var item = listContent[id];
-      var itemWithDefaults = _extends({}, backup, item);
-
-      fn(itemWithDefaults, [path, id].join('.'), i);
-
-      i++;
-    });
-  };
-};
-
-/**
- * Loads a given section's content
- *
- * @param {String} appName
- * @param {String} path
- * @param {Object} [options]
- * @param {Boolean} [options.draft]
- * @param {Function} cb               Callback({Error} err, {Object} content, {Function} t)
- */
-var _load = function _load(appName, path) {
-  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  var cb = arguments[3];
-
-  // Normalise arguments
-  if (arguments.length === 3) {
-    // appName, path, cb
-    cb = options;
-    options = {};
-  }
-
-  var params = encodeQuerystring(options);
-
-  var url = config.apiUrl + '/apps/' + appName + '/content/' + path + '?' + params;
-
-  fetch(url).then(function (res) {
-    if (!res.ok) return cb(new Error('Error loading ' + path + ': ' + res.statusText));
-
-    return res.json().then(function (content) {
-      var helpers = {
-        text: createTextHelper(content, options),
-        list: createListHelper(content, options)
-      };
-
-      cb(null, content, helpers);
-    }).catch(function (err) {
-      cb(err);
-    });
-  }).catch(function (err) {
-    cb(err);
-  });
-};
-
-/**
- * Creates an client with methods bound to the app and options provided
- *
- * @param {String} appName
- * @param {Object} [options]
- * @param {Boolean} [options.draft]
- * @param {Function} cb               Callback({Error} err, {Object} content, {Function} t)
- */
-var connect = function connect(appName) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-  // Prevent mutating original options object
-  options = _extends({}, options);
-
-  // Object to store all content that's loaded
-  var _allContent = {};
-
-  var _startEditor = function _startEditor() {
-    // Turn draft mode on when in edit mode
-    options.draft = true;
-
-    startEditor(appName, options);
-  };
-
-  switch (options.editMode) {
-    // Edit mode always on
-    case true:
-      _startEditor();
-      break;
-
-    // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
-    case 'querystring':
-      if (/[?&]edit(&|$)/.test(location.search)) {
-        _startEditor();
+        default:
+          break;
       }
-      break;
+    }
 
-    default:
-      break;
-  }
+    /**
+     * Loads a section of content so that it's items are ready to be accessed with #get(id)
+     *
+     * @param {String} path     Section path e.g. `section`
+     */
 
-  return {
-    load: function load(path) {
-      var cb = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {};
+  }, {
+    key: 'load',
+    value: function load(path) {
+      var _this = this;
+
+      var appName = this.appName,
+          options = this.options;
+
 
       return new Promise(function (resolve, reject) {
         // Return cached version if available
-        if (_allContent[path]) {
-          var content = _allContent[path];
-          // console.info('from cache: ', path);
+        var sectionContent = _this.content[path];
 
-          resolve(content);
-          cb(null, content);
-
-          return;
+        if (sectionContent) {
+          console.info('from cache: ', path);
+          return resolve(sectionContent);
         }
 
         // No cached version; fetch from server
-        // console.info('from server: ', path);
+        console.info('from server: ', path);
 
-        _load(appName, path, options, function (err, content) {
-          if (err) {
-            reject(err);
-            cb(err);
-          } else {
+        var params = (0, _utils.encodeQueryString)(options);
+        var url = API_URL + '/apps/' + appName + '/content/' + path + '?' + params;
+
+        return fetch(url).then(function (res) {
+          if (!res.ok) throw new Error('Error loading ' + path + ': ' + res.statusText);
+
+          return res.json().then(function (sectionContent) {
             // Cache for next time
-            // _allContent[path] = content;
             // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-            _extends(_allContent, content);
+            _extends(_this.content, sectionContent);
 
-            resolve(content);
-            cb(null, content);
-          }
+            resolve(sectionContent);
+          });
         });
       });
-    },
+    }
 
-    get: createTextHelper(_allContent, options),
+    /**
+     * Gets a content item by path (e.g. `section.item`)
+     *
+     * @param {String} path       Item path e.g. `section.item`
+     * @param {String} [backup]   Backup content to display if there is no item content
+     */
 
-    map: function map(path, fn) {
+  }, {
+    key: 'get',
+    value: function get(path, backup) {
+      var options = this.options,
+          content = this.content;
+
+
+      if (options.draft) {
+        backup = typeof backup !== 'undefined' ? backup : '[' + path + ']';
+      }
+
+      return (0, _getPropertyValue2.default)(content, path) || backup;
+    }
+
+    /**
+     * Invokes a function on every content item in a list.
+     *
+     * @param {String} path     Item path e.g. `section.item`
+     * @param {Function} fn     Function to invoke
+     */
+
+  }, {
+    key: 'map',
+    value: function map(path, fn) {
+      var content = this.content;
+
       // Get list content, defaulting to backup with the template
-      var listContent = (0, _getPropertyValue2.default)(_allContent, path) || _defineProperty({}, Date.now(), {});
+
+      var listContent = (0, _getPropertyValue2.default)(content, path) || _defineProperty({}, Date.now(), {});
       var index = 0;
 
       return Object.keys(listContent).map(function (id) {
@@ -418,21 +328,41 @@ var connect = function connect(appName) {
 
         return fn(item, [path, id].join('.'), currentIndex);
       });
-    },
+    }
+  }, {
+    key: 'startEditor',
+    value: function startEditor() {
+      var appName = this.appName,
+          options = this.options;
 
-    startEditor: startEditor.bind(null, appName, options)
-  };
-};
+      // Draft mode is always on if in edit mode
 
-exports.default = {
-  connect: connect,
-  load: _load,
-  startEditor: startEditor
-};
+      this.options.draft = true;
+
+      var script = document.createElement('script');
+
+      script.src = WIDGET_URL;
+      script.async = true;
+      script.setAttribute('data-app', appName);
+
+      if (options.lang) {
+        script.setAttribute('data-lang', options.lang);
+      }
+
+      document.getElementsByTagName('body')[0].appendChild(script);
+    }
+  }]);
+
+  return Wurd;
+}();
+
+;
+
+exports.default = new Wurd();
 module.exports = exports['default'];
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

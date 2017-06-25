@@ -4,11 +4,15 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import wurd from '../../dist/wurd'; // In your app this should require the `wurd-web` module
 
 import App from './components/app';
 
+
 //Connect to Wurd CMS
-import wurd from './wurd';
+wurd.connect('example', {
+  editMode: true, //Always in edit mode
+});
 
 
 // Load initial content (e.g. app name, titles etc.)
