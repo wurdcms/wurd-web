@@ -1,10 +1,11 @@
 # Wurd CMS client for the browser
-This is meant for client-side applications where you will load the content in the browser.
-If rendering on the server, use wurd-node.
+Load content from the Wurd CMS in the browser.  If rendering on the server, use the API or [wurd-node](https://github.com/wurdcms/wurd-node-v3).
 
 ## Example
-```
-var wurd = require('wurd-web').connect('myApp');
+```javascript
+import wurd from 'wurd-web';
+
+wurd.connect('myApp');
 
 wurd.load('homepage,common')
   .then(content => {
@@ -14,20 +15,16 @@ wurd.load('homepage,common')
   });
 ```
 
+See more in the [examples](https://github.com/wurdcms/wurd-web/tree/master/examples) folder or run them with `npm run examples`.
 
-## Install
+
+## Installation
+Using NPM:
 ```
 npm install wurd-web
 ```
 
-## Run examples
+Directly in the browser:
 ```
-npm run examples
+<script src="https://unpkg.com/wurd-web/dist/wurd.js"></script>
 ```
-
-
-## API
-
-### connect()
-
-### 
