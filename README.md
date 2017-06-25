@@ -1,4 +1,4 @@
-# Wurd CMS client for the browser
+# Browser Javascript client for the Wurd CMS
 Load content from the Wurd CMS in the browser.  If rendering on the server, use the API or [wurd-node](https://github.com/wurdcms/wurd-node-v3).
 
 ## Example
