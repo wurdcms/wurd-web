@@ -5,8 +5,8 @@ If you're using React, check out [wurd-react](https://github.com/wurdcms/wurd-re
 
 If rendering on the server, use the API or [wurd-node](https://github.com/wurdcms/wurd-node-v3).
 
-## Example
 
+## Example
 ```javascript
 import wurd from 'wurd-web';
 
@@ -24,7 +24,6 @@ See more in the [examples](https://github.com/wurdcms/wurd-web/tree/master/examp
 
 
 ## Installation
-
 Using NPM:
 ```
 npm install wurd-web
@@ -36,11 +35,11 @@ Directly in the browser:
 ```
 
 ## Usage
-
-1. Connect to a Wurd app with `wurd.connect('appName', options)`. 
-2. Load top level 'sections' of content you'll be using with `wurd.load('section')`.
-3. In your views/templates etc., get content with `wurd.get('section.item')`.
-4. To make regions editable, simply add the `data-wurd` attributes to the HTML.  For example (using Mustache style template tags):
+1. Create a Wurd account and app.
+2. Connect to a Wurd app with `wurd.connect('appName', {editMode: true})`. 
+3. Load top level 'sections' of content you'll be using with `wurd.load('section')`.
+4. In your views/templates etc., get content with `wurd.get('section.item')`.
+5. To make regions editable, simply add the `data-wurd` attributes to the HTML.  For example (using Mustache style template tags):
 
 ```html
 <h1 data-wurd="homepage.title">{{wurd.get('homepage.title')}}</h1>
