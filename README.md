@@ -35,8 +35,7 @@ Directly in the browser:
 <script src="https://unpkg.com/wurd-web/dist/wurd.js"></script>
 ```
 
-
-## Usage
+## Usage
 
 1. Connect to a Wurd app with `wurd.connect('appName', options)`. 
 2. Load top level 'sections' of content you'll be using with `wurd.load('section')`.
