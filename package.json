@@ -11,16 +11,6 @@
     "examples": "serve examples"
   },
   "devDependencies": {
-  },
-  "keywords": [
-    "cms",
-    "headless",
-    "content",
-    "browser"
-  ],
-  "author": "Charles Davison",
-  "license": "MIT",
-  "dependencies": {
     "babel-cli": "6.24.1",
     "babel-core": "6.24.1",
     "babel-eslint": "7.2.3",
@@ -34,7 +24,17 @@
     "mocha": "3.3.0",
     "serve": "^5.1.5",
     "webpack": "2.4.1",
-    "yargs": "7.1.0",
+    "yargs": "7.1.0"
+  },
+  "keywords": [
+    "cms",
+    "headless",
+    "content",
+    "browser"
+  ],
+  "author": "Charles Davison",
+  "license": "MIT",
+  "dependencies": {
     "get-property-value": "2.0.0"
   }
 }
