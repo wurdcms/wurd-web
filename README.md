@@ -31,7 +31,7 @@ npm install wurd-web
 
 Directly in the browser:
 ```
-<script src="https://unpkg.com/wurd-web/dist/wurd.js"></script>
+<script src="https://unpkg.com/wurd-web/dist/wurd.min.js"></script>
 ```
 
 ## Usage
