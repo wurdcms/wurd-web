@@ -1,32 +1,43 @@
-<html>
-<head>
-  <script src="dist/wurd.min.js"></script> <!-- Change to point to a file on your site or a CDN -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
-  <!-- Optional file for rendering Markdown content -->
-  <script src="https://unpkg.com/marked@0.3.6"></script>
-</head>
-<body>
-  <img data-wurd-img="simple.image" height="200" />
+    <!-- Change to point to a file on your site or a CDN -->
+    <script src="dist/wurd.min.js"></script>
 
-  <h1 data-wurd="simple.title"></h1>
+    <!-- Optional file for rendering Markdown content -->
+    <script src="https://unpkg.com/marked@0.3.6"></script>
+  </head>
+  <body class="container">
+    <img data-wurd-img="home.heroImage" width="100%" />
 
-  <div data-wurd-md="simple.intro"></div>
+    <h2 data-wurd="home.welcome.title"></h2>
+
+    <div data-wurd-md="home.welcome.intro" class="alert alert-info"></div>
+
+    <div data-wurd-md="home.welcome.markdown"></div>
 
 
-  <script>
-    var $ = document.querySelector.bind(document);
-    var markdown = marked;
+    <script>
+      var $ = document.querySelector.bind(document);
+      var markdown = marked;
 
-    wurd.connect('example', {
-      editMode: 'querystring' //Add ?edit to the page's querystring to activate editing mode
-    });
-
-    wurd.load('simple,common')
-      .then(function(content) {
-        $('[data-wurd="simple.title"]').innerHTML = wurd.get('simple.title');
-        $('[data-wurd-md="simple.intro"]').innerHTML = markdown(wurd.get('simple.intro'));
-        $('[data-wurd-img="simple.image"]').src = wurd.get('simple.image');
+      wurd.connect('example', {
+        editMode: 'querystring' //Add ?edit to the page's querystring to activate editing mode
       });
-  </script>
-</body>
+
+      wurd.load('home,nav')
+        .then(function(content) {
+          $('[data-wurd-img="home.heroImage"]').src = wurd.get('home.heroImage');
+          $('[data-wurd="home.welcome.title"]').innerHTML = wurd.get('home.welcome.title');
+          $('[data-wurd-md="home.welcome.intro"]').innerHTML = wurd.get('home.welcome.intro').replace('{{name}}', 'John');
+          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = markdown(wurd.get('home.welcome.markdown'));
+        });
+    </script>
+  </body>
 </html>
