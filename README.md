@@ -20,7 +20,7 @@ wurd.load('homepage,common')
   });
 ```
 
-See more in the [examples](https://github.com/wurdcms/wurd-web/tree/master/examples) folder or run them with `npm run examples`.
+See more in the [examples](https://github.com/wurdcms/wurd-web/tree/master/examples) folder or run them with `npm run example`.
 
 
 ## Installation
