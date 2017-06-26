@@ -9,7 +9,7 @@
     "dev": "webpack --progress --colors --watch --env dev",
     "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
     "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js",
-    "examples": "serve examples"
+    "example": "serve examples/simple"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
