@@ -3,7 +3,7 @@ Wurd is a service that lets you integrate a CMS into any website or app in minut
 
 If you're using React, check out [wurd-react](https://github.com/wurdcms/wurd-react) as it includes easy to use components for setting up editors and content at once.
 
-If rendering on the server, use the API or [wurd-node](https://github.com/wurdcms/wurd-node-v3).
+If rendering on the server, use the API or [wurd-node](https://github.com/wurdcms/wurd-node).
 
 
 ## Example
