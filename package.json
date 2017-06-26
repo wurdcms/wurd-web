@@ -36,5 +36,11 @@
   "license": "MIT",
   "dependencies": {
     "get-property-value": "2.0.0"
-  }
+  },
+  "files": [
+    "*.md",
+    "dist",
+    "src",
+    "examples"
+  ]
 }
