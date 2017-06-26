@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "description": "Browser JS client for the Wurd CMS",
   "main": "dist/wurd.js",
+  "module": "src/index.js",
   "scripts": {
     "build": "webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
@@ -42,5 +43,10 @@
     "dist",
     "src",
     "examples"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wurdcms/wurd-web.git"
+  },
+  "homepage": "https://github.com/wurdcms/wurd-web"
 }
