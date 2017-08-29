@@ -57,7 +57,7 @@ class Wurd {
 
     return new Promise((resolve, reject) => {
       if (!appName) {
-        return reject('Use wurd.connect(appName) before wurd.load()');
+        return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
       }
 
       // Return cached version if available
@@ -75,18 +75,23 @@ class Wurd {
       const url = `${API_URL}/apps/${appName}/content/${path}?${params}`;
 
       return fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`Error loading ${path}: ${res.statusText}`);
+        .then(res => res.json())
+        .then(result => {
+          if (result.error) {
+            if (result.error.message) {
+              throw new Error(result.error.message);
+            } else {
+              throw new Error(`Error loading ${path}`);
+            }
+          }
 
-          return res.json()
-            .then(sectionContent => {
-              // Cache for next time
-              // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-              Object.assign(this.content, sectionContent);
+          // Cache for next time
+          // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
+          Object.assign(this.content, result);
 
-              resolve(sectionContent);
-            });
-        });
+          resolve(result);
+        })
+        .catch(err => reject(err));
     });
   }
 

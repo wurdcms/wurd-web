@@ -255,7 +255,7 @@ var Wurd = function () {
 
       return new Promise(function (resolve, reject) {
         if (!appName) {
-          return reject('Use wurd.connect() before wurd.load()');
+          return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
         }
 
         // Return cached version if available
@@ -273,15 +273,23 @@ var Wurd = function () {
         var url = API_URL + '/apps/' + appName + '/content/' + path + '?' + params;
 
         return fetch(url).then(function (res) {
-          if (!res.ok) throw new Error('Error loading ' + path + ': ' + res.statusText);
+          return res.json();
+        }).then(function (result) {
+          if (result.error) {
+            if (result.error.message) {
+              throw new Error(result.error.message);
+            } else {
+              throw new Error('Error loading ' + path);
+            }
+          }
 
-          return res.json().then(function (sectionContent) {
-            // Cache for next time
-            // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-            _extends(_this.content, sectionContent);
+          // Cache for next time
+          // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
+          _extends(_this.content, result);
 
-            resolve(sectionContent);
-          });
+          resolve(result);
+        }).catch(function (err) {
+          return reject(err);
         });
       });
     }

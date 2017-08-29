@@ -32,6 +32,7 @@
       });
 
       wurd.load('home,nav')
+        .catch(function(err) { console.error(err) })
         .then(function(content) {
           $('[data-wurd-img="home.heroImage"]').src = wurd.get('home.heroImage');
           $('[data-wurd="home.welcome.title"]').innerHTML = wurd.get('home.welcome.title');
