@@ -197,7 +197,8 @@ var Wurd = function () {
     _classCallCheck(this, Wurd);
 
     this.appName = null;
-    this.options = {};
+    this.draft = false;
+    this.editMode = false;
 
     // Object to store all content that's loaded
     this.content = {};
@@ -208,19 +209,29 @@ var Wurd = function () {
    *
    * @param {String} appName
    * @param {Object} [options]
-   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
+   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    */
 
 
   _createClass(Wurd, [{
     key: 'connect',
-    value: function connect(appName, options) {
+    value: function connect(appName) {
+      var _this = this;
+
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
       this.appName = appName;
-      this.options = _extends({}, options);
+
+      // Set allowed options
+      ['draft', 'lang', 'debug'].forEach(function (name) {
+        var val = options[name];
+
+        if (typeof val !== 'undefined') _this[name] = val;
+      });
 
       // Activate edit mode if required
-      switch (this.options.editMode) {
+      switch (options.editMode) {
         // Edit mode always on
         case true:
           this.startEditor();
@@ -247,10 +258,10 @@ var Wurd = function () {
   }, {
     key: 'load',
     value: function load(path) {
-      var _this = this;
+      var _this2 = this;
 
       var appName = this.appName,
-          options = this.options;
+          debug = this.debug;
 
 
       return new Promise(function (resolve, reject) {
@@ -259,18 +270,24 @@ var Wurd = function () {
         }
 
         // Return cached version if available
-        var sectionContent = _this.content[path];
+        var sectionContent = _this2.content[path];
 
         if (sectionContent) {
-          options.log && console.info('from cache: ', path);
+          debug && console.info('from cache: ', path);
           return resolve(sectionContent);
         }
 
         // No cached version; fetch from server
-        options.log && console.info('from server: ', path);
+        debug && console.info('from server: ', path);
 
-        var params = (0, _utils.encodeQueryString)(options);
-        var url = API_URL + '/apps/' + appName + '/content/' + path + '?' + params;
+        // Build request URL
+        var params = ['draft', 'lang'].reduce(function (memo, param) {
+          if (_this2[param]) memo[param] = _this2[param];
+
+          return memo;
+        }, {});
+
+        var url = API_URL + '/apps/' + appName + '/content/' + path + '?' + (0, _utils.encodeQueryString)(params);
 
         return fetch(url).then(function (res) {
           return res.json();
@@ -285,7 +302,7 @@ var Wurd = function () {
 
           // Cache for next time
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          _extends(_this.content, result);
+          _extends(_this2.content, result);
 
           resolve(result);
         }).catch(function (err) {
@@ -304,11 +321,11 @@ var Wurd = function () {
   }, {
     key: 'get',
     value: function get(path, backup) {
-      var options = this.options,
+      var draft = this.draft,
           content = this.content;
 
 
-      if (options.draft) {
+      if (draft) {
         backup = typeof backup !== 'undefined' ? backup : '[' + path + ']';
       }
 
@@ -345,11 +362,12 @@ var Wurd = function () {
     key: 'startEditor',
     value: function startEditor() {
       var appName = this.appName,
-          options = this.options;
+          lang = this.lang;
 
       // Draft mode is always on if in edit mode
 
-      this.options.draft = true;
+      this.editMode = true;
+      this.draft = true;
 
       var script = document.createElement('script');
 
@@ -357,8 +375,8 @@ var Wurd = function () {
       script.async = true;
       script.setAttribute('data-app', appName);
 
-      if (options.lang) {
-        script.setAttribute('data-lang', options.lang);
+      if (lang) {
+        script.setAttribute('data-lang', lang);
       }
 
       document.getElementsByTagName('body')[0].appendChild(script);

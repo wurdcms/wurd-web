@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
-    <!-- Change to point to a file on your site or a CDN -->
+    <!-- Change to point to the file on your site or a CDN -->
     <script src="dist/wurd.min.js"></script>
 
     <!-- Optional file for rendering Markdown content -->
@@ -28,7 +28,8 @@
       var markdown = marked;
 
       wurd.connect('example', {
-        editMode: 'querystring' //Add ?edit to the page's querystring to activate editing mode
+        editMode: 'querystring', //Add ?edit to the page's querystring to activate editing mode
+        lang: 'en'
       });
 
       wurd.load('home,nav')

@@ -10,7 +10,8 @@ class Wurd {
 
   constructor() {
     this.appName = null;
-    this.options = {};
+    this.draft = false;
+    this.editMode = false;
 
     // Object to store all content that's loaded
     this.content = {};
@@ -21,15 +22,21 @@ class Wurd {
    *
    * @param {String} appName
    * @param {Object} [options]
-   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
+   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    */
-  connect(appName, options) {
+  connect(appName, options = {}) {
     this.appName = appName;
-    this.options = Object.assign({}, options);
+
+    // Set allowed options
+    ['draft', 'lang', 'debug'].forEach(name => {
+      const val = options[name];
+
+      if (typeof val !== 'undefined') this[name] = val;
+    });
 
     // Activate edit mode if required
-    switch (this.options.editMode) {
+    switch (options.editMode) {
       // Edit mode always on
       case true:
         this.startEditor();
@@ -53,7 +60,7 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {appName, options} = this;
+    let {appName, debug} = this;
 
     return new Promise((resolve, reject) => {
       if (!appName) {
@@ -64,15 +71,21 @@ class Wurd {
       let sectionContent = this.content[path];
 
       if (sectionContent) {
-        options.log && console.info('from cache: ', path);
+        debug && console.info('from cache: ', path);
         return resolve(sectionContent);
       }
 
       // No cached version; fetch from server
-      options.log && console.info('from server: ', path);
+      debug && console.info('from server: ', path);
 
-      const params = encodeQueryString(options);
-      const url = `${API_URL}/apps/${appName}/content/${path}?${params}`;
+      // Build request URL
+      const params = ['draft', 'lang'].reduce((memo, param) => {
+        if (this[param]) memo[param] = this[param];
+
+        return memo;
+      }, {});
+
+      const url = `${API_URL}/apps/${appName}/content/${path}?${encodeQueryString(params)}`;
 
       return fetch(url)
         .then(res => res.json())
@@ -102,9 +115,9 @@ class Wurd {
    * @param {String} [backup]   Backup content to display if there is no item content
    */
   get(path, backup) {
-    let {options, content} = this;
+    let {draft, content} = this;
 
-    if (options.draft) {
+    if (draft) {
       backup = (typeof backup !== 'undefined') ? backup : `[${path}]`;
     }
 
@@ -135,10 +148,11 @@ class Wurd {
   }
 
   startEditor() {
-    let {appName, options} = this;
+    let {appName, lang} = this;
 
     // Draft mode is always on if in edit mode
-    this.options.draft = true;
+    this.editMode = true;
+    this.draft = true;
 
     let script = document.createElement('script');
 
@@ -146,8 +160,8 @@ class Wurd {
     script.async = true;
     script.setAttribute('data-app', appName);
 
-    if (options.lang) {
-      script.setAttribute('data-lang', options.lang);
+    if (lang) {
+      script.setAttribute('data-lang', lang);
     }
 
     document.getElementsByTagName('body')[0].appendChild(script);
