@@ -52,6 +52,8 @@ class Wurd {
       default:
         break;
     }
+
+    return this;
   }
 
   /**
@@ -109,19 +111,54 @@ class Wurd {
   }
 
   /**
-   * Gets a content item by path (e.g. `section.item`)
+   * Gets a content item by path (e.g. `section.item`).
+   * Will return both text and/or objects, depending on the contents of the item
    *
    * @param {String} path       Item path e.g. `section.item`
-   * @param {String} [backup]   Backup content to display if there is no item content
+   * @param {Mixed} [backup]    Backup content to return if there is no item content
+   *
+   * @return {Mixed}
    */
   get(path, backup) {
-    let {draft, content} = this;
+    const {draft, content} = this;
 
     if (draft) {
       backup = (typeof backup !== 'undefined') ? backup : `[${path}]`;
     }
 
     return get(content, path) || backup;
+  }
+
+  /**
+   * Gets text content of an item by path (e.g. `section.item`).
+   * If the item is not a string, e.g. you have passed the path of an object,
+   * an empty string will be returned, unless in editMode in which case a warning will be returned.
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   * @param {Mixed} [backup]    Backup content to return if there is no item content
+   *
+   * @return {Mixed}
+   */
+  text(path, backup) {
+    const {draft, content} = this;
+
+    let text = get(content, path);
+
+    if (typeof text === 'undefined') {
+      if (typeof backup !== 'undefined') return backup;
+
+      return (draft) ? `[${path}]` : '';
+    }
+
+    if (typeof text !== 'string') {
+      console.warn(`Tried to get object as string: ${path}`);
+
+      if (typeof backup !== 'undefined') return backup;
+
+      return (draft) ? `[${path}]` : '';
+    }
+
+    return text;
   }
 
   /**
@@ -170,4 +207,9 @@ class Wurd {
 };
 
 
-export default new Wurd();
+const instance = new Wurd();
+
+instance.Wurd = Wurd;
+
+
+export default instance;

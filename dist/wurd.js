@@ -247,6 +247,8 @@ var Wurd = function () {
         default:
           break;
       }
+
+      return this;
     }
 
     /**
@@ -312,10 +314,13 @@ var Wurd = function () {
     }
 
     /**
-     * Gets a content item by path (e.g. `section.item`)
+     * Gets a content item by path (e.g. `section.item`).
+     * Will return both text and/or objects, depending on the contents of the item
      *
      * @param {String} path       Item path e.g. `section.item`
-     * @param {String} [backup]   Backup content to display if there is no item content
+     * @param {Mixed} [backup]    Backup content to return if there is no item content
+     *
+     * @return {Mixed}
      */
 
   }, {
@@ -330,6 +335,43 @@ var Wurd = function () {
       }
 
       return (0, _getPropertyValue2.default)(content, path) || backup;
+    }
+
+    /**
+     * Gets text content of an item by path (e.g. `section.item`).
+     * If the item is not a string, e.g. you have passed the path of an object,
+     * an empty string will be returned, unless in editMode in which case a warning will be returned.
+     *
+     * @param {String} path       Item path e.g. `section.item`
+     * @param {Mixed} [backup]    Backup content to return if there is no item content
+     *
+     * @return {Mixed}
+     */
+
+  }, {
+    key: 'text',
+    value: function text(path, backup) {
+      var draft = this.draft,
+          content = this.content;
+
+
+      var text = (0, _getPropertyValue2.default)(content, path);
+
+      if (typeof text === 'undefined') {
+        if (typeof backup !== 'undefined') return backup;
+
+        return draft ? '[' + path + ']' : '';
+      }
+
+      if (typeof text !== 'string') {
+        console.warn('Tried to get object as string: ' + path);
+
+        if (typeof backup !== 'undefined') return backup;
+
+        return draft ? '[' + path + ']' : '';
+      }
+
+      return text;
     }
 
     /**
@@ -388,7 +430,11 @@ var Wurd = function () {
 
 ;
 
-exports.default = new Wurd();
+var instance = new Wurd();
+
+instance.Wurd = Wurd;
+
+exports.default = instance;
 module.exports = exports['default'];
 
 /***/ }),

@@ -1,13 +1,13 @@
 {
   "name": "wurd-web",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Browser JS client for the Wurd CMS",
   "main": "dist/wurd.js",
   "scripts": {
     "build": "webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
-    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
-    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js",
+    "test": "mocha --compilers js:babel-core/register --colors ./src/*.spec.js",
+    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./src/*.spec.js",
     "example": "serve examples/simple"
   },
   "devDependencies": {
@@ -23,6 +23,7 @@
     "eslint-loader": "1.7.1",
     "mocha": "3.3.0",
     "serve": "^5.1.5",
+    "sinon": "^3.2.1",
     "webpack": "2.4.1",
     "yargs": "7.1.0"
   },
