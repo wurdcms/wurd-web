@@ -36,9 +36,9 @@
         .catch(function(err) { console.error(err) })
         .then(function(content) {
           $('[data-wurd-img="home.heroImage"]').src = wurd.get('home.heroImage');
-          $('[data-wurd="home.welcome.title"]').innerHTML = wurd.text('home.welcome.title');
-          $('[data-wurd-md="home.welcome.intro"]').innerHTML = wurd.text('home.welcome.intro').replace('{{name}}', 'John');
-          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = markdown(wurd.text('home.welcome.markdown').replace('{{date}}', (new Date()).toLocaleString()));
+          $('[data-wurd="home.welcome.title"]').innerText = wurd.text('home.welcome.title');
+          $('[data-wurd-md="home.welcome.intro"]').innerText = wurd.text('home.welcome.intro', { name: 'John' });
+          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = markdown(wurd.text('home.welcome.markdown', { date: (new Date()).toLocaleString() }));
         });
     </script>
   </body>

@@ -78,22 +78,9 @@ describe('Wurd', function() {
     });
 
     describe('when item is missing', function() {
-      describe('without backup content', function() {
-        it('returns undefined in live mode', function() {
-          same(wurdLive.get('a.foo'), undefined);
-        });
-
-        it('returns path in draft mode', function() {
-          same(wurdDraft.get('a.foo'), '[a.foo]');
-        });
-      });
-
-      describe('with backup content', function() {
-        it('returns the backup content', function() {
-          same(wurdLive.get('a.foo', 'Lorem ipsum'), 'Lorem ipsum');
-
-          same(wurdDraft.get('a.foo', 'Lorem ipsum'), 'Lorem ipsum');
-        });
+      it('returns undefined', function() {
+        same(wurdLive.get('a.foo'), undefined);
+        same(wurdDraft.get('a.foo'), undefined);
       });
     });
   });
@@ -110,7 +97,8 @@ describe('Wurd', function() {
           b: {
             a: 'ABA',
             b: 'ABB'
-          }
+          },
+          c: 'Hello {{name}}, today is {{day}}'
         }
       };
 
@@ -133,22 +121,12 @@ describe('Wurd', function() {
     });
 
     describe('when item is missing', function() {
-      describe('without backup content', function() {
-        it('returns empty string in live mode', function() {
-          same(wurdLive.text('a.foo'), '');
-        });
-
-        it('returns path in draft mode', function() {
-          same(wurdDraft.text('a.foo'), '[a.foo]');
-        });
+      it('returns empty string in live mode', function() {
+        same(wurdLive.text('a.foo'), '');
       });
 
-      describe('with backup content', function() {
-        it('returns the backup content', function() {
-          same(wurdLive.text('a.foo', 'Lorem ipsum'), 'Lorem ipsum');
-
-          same(wurdDraft.text('a.foo', 'Lorem ipsum'), 'Lorem ipsum');
-        });
+      it('returns path in draft mode', function() {
+        same(wurdDraft.text('a.foo'), '[a.foo]');
       });
     });
 
@@ -161,22 +139,20 @@ describe('Wurd', function() {
         same(console.warn.args[0][0], 'Tried to get object as string: a.b');
       });
 
-      describe('without backup content', function() {
-        it('returns empty string in live mode', function() {
-          same(wurdLive.text('a.b'), '');
-        });
-
-        it('returns path in draft mode', function() {
-          same(wurdDraft.text('a.b'), '[a.b]');
-        });
+      it('returns empty string in live mode', function() {
+        same(wurdLive.text('a.b'), '');
       });
 
-      describe('with backup content', function() {
-        it('returns backup content', function() {
-          same(wurdLive.text('a.b', 'Lorem ipsum'), 'Lorem ipsum');
+      it('returns path in draft mode', function() {
+        same(wurdDraft.text('a.b'), '[a.b]');
+      });
+    });
 
-          same(wurdDraft.text('a.b', 'Lorem ipsum'), 'Lorem ipsum');
-        });
+    describe('with vars argument', function() {
+      it('replaces {{mustache}} style placeholders with vars', function() {
+        same(wurdLive.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
+        
+        same(wurdDraft.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
       });
     });
   });

@@ -1,5 +1,5 @@
 import get from 'get-property-value';
-import {encodeQueryString} from './utils';
+import {encodeQueryString, replaceVars} from './utils';
 
 
 const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
@@ -115,47 +115,40 @@ class Wurd {
    * Will return both text and/or objects, depending on the contents of the item
    *
    * @param {String} path       Item path e.g. `section.item`
-   * @param {Mixed} [backup]    Backup content to return if there is no item content
    *
    * @return {Mixed}
    */
-  get(path, backup) {
-    const {draft, content} = this;
-
-    if (draft) {
-      backup = (typeof backup !== 'undefined') ? backup : `[${path}]`;
-    }
-
-    return get(content, path) || backup;
+  get(path) {
+    return get(this.content, path);
   }
 
   /**
    * Gets text content of an item by path (e.g. `section.item`).
    * If the item is not a string, e.g. you have passed the path of an object,
-   * an empty string will be returned, unless in editMode in which case a warning will be returned.
+   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
    *
    * @param {String} path       Item path e.g. `section.item`
-   * @param {Mixed} [backup]    Backup content to return if there is no item content
+   * @param {Object} [vars]     Variables to replace in the text
    *
    * @return {Mixed}
    */
-  text(path, backup) {
+  text(path, vars) {
     const {draft, content} = this;
 
     let text = get(content, path);
 
     if (typeof text === 'undefined') {
-      if (typeof backup !== 'undefined') return backup;
-
       return (draft) ? `[${path}]` : '';
     }
 
     if (typeof text !== 'string') {
       console.warn(`Tried to get object as string: ${path}`);
 
-      if (typeof backup !== 'undefined') return backup;
-
       return (draft) ? `[${path}]` : '';
+    }
+
+    if (vars) {
+      text = replaceVars(text, vars);
     }
 
     return text;

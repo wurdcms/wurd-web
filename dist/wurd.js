@@ -86,6 +86,11 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+/**
+ * @param {Object} data
+ *
+ * @return {String}
+ */
 var encodeQueryString = exports.encodeQueryString = function encodeQueryString(data) {
   var parts = Object.keys(data).map(function (key) {
     var value = data[key];
@@ -94,6 +99,28 @@ var encodeQueryString = exports.encodeQueryString = function encodeQueryString(d
   });
 
   return parts.join('&');
+};
+
+/**
+ * Replaces {{mustache}} style placeholders in text with variables
+ *
+ * @param {String} text
+ * @param {Object} vars
+ *
+ * @return {String}
+ */
+var replaceVars = exports.replaceVars = function replaceVars(text) {
+  var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  if (typeof text !== 'string') return text;
+
+  Object.keys(vars).forEach(function (key) {
+    var val = vars[key];
+
+    text = text.replace(new RegExp('{{' + key + '}}', 'g'), val);
+  });
+
+  return text;
 };
 
 /***/ }),
@@ -318,39 +345,30 @@ var Wurd = function () {
      * Will return both text and/or objects, depending on the contents of the item
      *
      * @param {String} path       Item path e.g. `section.item`
-     * @param {Mixed} [backup]    Backup content to return if there is no item content
      *
      * @return {Mixed}
      */
 
   }, {
     key: 'get',
-    value: function get(path, backup) {
-      var draft = this.draft,
-          content = this.content;
-
-
-      if (draft) {
-        backup = typeof backup !== 'undefined' ? backup : '[' + path + ']';
-      }
-
-      return (0, _getPropertyValue2.default)(content, path) || backup;
+    value: function get(path) {
+      return (0, _getPropertyValue2.default)(this.content, path);
     }
 
     /**
      * Gets text content of an item by path (e.g. `section.item`).
      * If the item is not a string, e.g. you have passed the path of an object,
-     * an empty string will be returned, unless in editMode in which case a warning will be returned.
+     * an empty string will be returned, unless in draft mode in which case a warning will be returned.
      *
      * @param {String} path       Item path e.g. `section.item`
-     * @param {Mixed} [backup]    Backup content to return if there is no item content
+     * @param {Object} [vars]     Variables to replace in the text
      *
      * @return {Mixed}
      */
 
   }, {
     key: 'text',
-    value: function text(path, backup) {
+    value: function text(path, vars) {
       var draft = this.draft,
           content = this.content;
 
@@ -358,17 +376,17 @@ var Wurd = function () {
       var text = (0, _getPropertyValue2.default)(content, path);
 
       if (typeof text === 'undefined') {
-        if (typeof backup !== 'undefined') return backup;
-
         return draft ? '[' + path + ']' : '';
       }
 
       if (typeof text !== 'string') {
         console.warn('Tried to get object as string: ' + path);
 
-        if (typeof backup !== 'undefined') return backup;
-
         return draft ? '[' + path + ']' : '';
+      }
+
+      if (vars) {
+        text = (0, _utils.replaceVars)(text, vars);
       }
 
       return text;
