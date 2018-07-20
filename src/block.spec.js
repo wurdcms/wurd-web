@@ -2,7 +2,6 @@ const test = require('assert');
 const sinon = require('sinon');
 
 const Block = require('./block');
-//const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
@@ -10,6 +9,26 @@ const same = test.strictEqual;
 describe('Wurd', function() {
   afterEach(function() {
     sinon.restore();
+  });
+
+
+  describe('#id()', function() {
+    describe('with no path argument', function() {
+      it('returns the block path', function() {
+        const block = new Block('appName', 'sectionName', {});
+
+        same(block.id(), 'sectionName');
+      });
+    });
+
+    describe('with path argument', function() {
+      it('returns the full item path, with the block path', function() {
+        const block = new Block('appName', 'sectionName', {});
+
+        same(block.id('itemName'), 'sectionName.itemName');
+        same(block.id('itemName.childItemName'), 'sectionName.itemName.childItemName');
+      });
+    });
   });
 
 
@@ -52,6 +71,10 @@ describe('Wurd', function() {
 
         same(liveBlock.get('a.foo'), undefined);
         same(draftBlock.get('a.foo'), undefined);
+      });
+
+      describe('in draft mode', function() {
+        it('logs a warning if section has not been loaded');
       });
     });
   });
@@ -136,6 +159,21 @@ describe('Wurd', function() {
         same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
       });
     });
+  });
+
+
+  describe('#markdown()', function() {
+
+  });
+
+
+  describe('#map()', function() {
+
+  });
+
+
+  describe('#block()', function() {
+
   });
 
 });

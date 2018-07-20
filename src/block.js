@@ -105,6 +105,20 @@ module.exports = class Block {
   }
 
   /**
+   * Gets HTML from Markdown content of an item by path (e.g. `section.item`).
+   * If the item is not a string, e.g. you have passed the path of an object,
+   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   * @param {Object} [vars]     Variables to replace in the text
+   *
+   * @return {Mixed}
+   */
+  markdown(path, vars) {
+    return marked(this.text(path, vars));
+  }
+
+  /**
    * Iterates over a collection / list object with the given callback.
    *
    * @param {String} path
@@ -149,20 +163,6 @@ module.exports = class Block {
     }
 
     return childBlock;
-  }
-
-  /**
-   * Gets HTML from Markdown content of an item by path (e.g. `section.item`).
-   * If the item is not a string, e.g. you have passed the path of an object,
-   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
-   *
-   * @param {String} path       Item path e.g. `section.item`
-   * @param {Object} [vars]     Variables to replace in the text
-   *
-   * @return {Mixed}
-   */
-  markdown(path, vars) {
-    return marked(this.text(path, vars));
   }
 
   /**
