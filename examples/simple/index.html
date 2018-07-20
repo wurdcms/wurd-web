@@ -28,13 +28,15 @@
         lang: 'en'
       });
 
-      wurd.load('home,nav')
+      wurd.load('shared,home')
         .catch(function(err) { console.error(err) })
         .then(function(content) {
-          $('[data-wurd-img="home.heroImage"]').src = content.get('home.heroImage');
-          $('[data-wurd="home.welcome.title"]').innerText = content.text('home.welcome.title');
-          $('[data-wurd-md="home.welcome.intro"]').innerText = content.text('home.welcome.intro', { name: 'John' });
-          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = content.markdown('home.welcome.markdown', { date: (new Date()).toLocaleString() });
+          var page = content.block('home');
+
+          $('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
+          $('[data-wurd="home.welcome.title"]').innerText = page.text('welcome.title');
+          $('[data-wurd-md="home.welcome.intro"]').innerText = page.text('welcome.intro', { name: 'John' });
+          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = page.markdown('welcome.markdown', { date: (new Date()).toLocaleString() });
         });
     </script>
   </body>
