@@ -25,12 +25,11 @@ describe('Wurd', function() {
         }
       };
 
-      this.liveBlock = new Block();
-      this.liveBlock.content = content;
+      this.liveBlock = new Block('live', null, content);
 
-      this.draftBlock = new Block();
-      this.draftBlock.draft = true;
-      this.draftBlock.content = content;
+      this.draftBlock = new Block('draft', null, content, {
+        draft: true
+      });
 
       sinon.stub(console, 'warn');
     });
@@ -71,12 +70,11 @@ describe('Wurd', function() {
         }
       };
 
-      this.liveBlock = new Block();
-      this.liveBlock.content = content;
+      this.liveBlock = new Block('live', null, content);
 
-      this.draftBlock = new Block();
-      this.draftBlock.draft = true;
-      this.draftBlock.content = content;
+      this.draftBlock = new Block('draft', null, content, {
+        draft: true
+      });
 
       sinon.stub(console, 'warn');
     });
@@ -93,13 +91,13 @@ describe('Wurd', function() {
 
     describe('when item is missing', function() {
       it('returns empty string in live mode', function() {
-        const {liveBlock, draftBlock} = this;
+        const {liveBlock} = this;
 
         same(liveBlock.text('a.foo'), '');
       });
 
       it('returns path in draft mode', function() {
-        const {liveBlock, draftBlock} = this;
+        const {draftBlock} = this;
 
         same(draftBlock.text('a.foo'), '[a.foo]');
       });
@@ -107,7 +105,7 @@ describe('Wurd', function() {
 
     describe('when item is not text', function() {
       it('prints a warning to the console', function() {
-        const {liveBlock, draftBlock} = this;
+        const {liveBlock} = this;
 
         liveBlock.text('a.b');
 
@@ -117,13 +115,13 @@ describe('Wurd', function() {
       });
 
       it('returns empty string in live mode', function() {
-        const {liveBlock, draftBlock} = this;
+        const {liveBlock} = this;
 
         same(liveBlock.text('a.b'), '');
       });
 
       it('returns path in draft mode', function() {
-        const {liveBlock, draftBlock} = this;
+        const {draftBlock} = this;
 
         same(draftBlock.text('a.b'), '[a.b]');
       });
@@ -132,7 +130,7 @@ describe('Wurd', function() {
     describe('with vars argument', function() {
       it('replaces {{mustache}} style placeholders with vars', function() {
         const {liveBlock, draftBlock} = this;
-        
+
         same(liveBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
         
         same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
