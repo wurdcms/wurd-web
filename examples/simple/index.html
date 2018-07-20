@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
     <!-- Change to point to the file on your site or a CDN -->
-    <script src="dist/wurd.js"></script>
+    <script src="dist/wurd.min.js"></script>
   </head>
   <body class="container">
     <img data-wurd-img="home.heroImage" style="width: 100%" />
@@ -28,7 +28,7 @@
         lang: 'en'
       });
 
-      wurd.load('shared,home')
+      wurd.load('nav,home')
         .catch(function(err) { console.error(err) })
         .then(function(content) {
           var page = content.block('home');
