@@ -1,5 +1,6 @@
-import get from 'get-property-value';
-import {encodeQueryString, replaceVars} from './utils';
+import {encodeQueryString} from './utils';
+
+import Block from './block';
 
 
 const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
@@ -104,76 +105,15 @@ class Wurd {
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
           Object.assign(this.content, result);
 
-          resolve(result);
+          const block = new Block(appName, null, result, {
+            lang: this.lang,
+            editMode: this.editMode,
+            draft: this.draft
+          });
+
+          resolve(block);
         })
         .catch(err => reject(err));
-    });
-  }
-
-  /**
-   * Gets a content item by path (e.g. `section.item`).
-   * Will return both text and/or objects, depending on the contents of the item
-   *
-   * @param {String} path       Item path e.g. `section.item`
-   *
-   * @return {Mixed}
-   */
-  get(path) {
-    return get(this.content, path);
-  }
-
-  /**
-   * Gets text content of an item by path (e.g. `section.item`).
-   * If the item is not a string, e.g. you have passed the path of an object,
-   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
-   *
-   * @param {String} path       Item path e.g. `section.item`
-   * @param {Object} [vars]     Variables to replace in the text
-   *
-   * @return {Mixed}
-   */
-  text(path, vars) {
-    const {draft, content} = this;
-
-    let text = get(content, path);
-
-    if (typeof text === 'undefined') {
-      return (draft) ? `[${path}]` : '';
-    }
-
-    if (typeof text !== 'string') {
-      console.warn(`Tried to get object as string: ${path}`);
-
-      return (draft) ? `[${path}]` : '';
-    }
-
-    if (vars) {
-      text = replaceVars(text, vars);
-    }
-
-    return text;
-  }
-
-  /**
-   * Invokes a function on every content item in a list.
-   *
-   * @param {String} path     Item path e.g. `section.item`
-   * @param {Function} fn     Function to invoke
-   */
-  map(path, fn) {
-    let {content} = this;
-
-    // Get list content, defaulting to backup with the template
-    let listContent = get(content, path) || { [Date.now()]: {} };
-    let index = 0;
-
-    return Object.keys(listContent).map(id => {
-      let item = listContent[id];
-      let currentIndex = index;
-
-      index++;
-
-      return fn(item, [path, id].join('.'), currentIndex);
     });
   }
 
