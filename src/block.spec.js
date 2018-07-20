@@ -1,7 +1,8 @@
 const test = require('assert');
 const sinon = require('sinon');
-const wurd = require('./');
-const Wurd = wurd.Wurd;
+
+const Block = require('./block');
+//const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
@@ -12,10 +13,7 @@ describe('Wurd', function() {
   });
 
 
-  /*describe('#get()', function() {
-    let wurdLive;
-    let wurdDraft;
-
+  describe('#get()', function() {
     beforeEach(function() {
       let content = {
         a: {
@@ -27,39 +25,40 @@ describe('Wurd', function() {
         }
       };
 
-      wurdLive = new Wurd();
-      wurdLive.content = content;
+      this.liveBlock = new Block();
+      this.liveBlock.content = content;
 
-      wurdDraft = new Wurd();
-      wurdDraft.draft = true;
-      wurdDraft.content = content;
+      this.draftBlock = new Block();
+      this.draftBlock.draft = true;
+      this.draftBlock.content = content;
 
       sinon.stub(console, 'warn');
     });
 
     describe('when item exists', function() {
       it('returns the content', function() {
-        same(wurdLive.get('a.a'), 'AA');
-        test.deepEqual(wurdLive.get('a.b'), { a: 'ABA', b: 'ABB' });
+        const {liveBlock, draftBlock} = this;
 
-        same(wurdDraft.get('a.a'), 'AA');
-        test.deepEqual(wurdDraft.get('a.b'), { a: 'ABA', b: 'ABB' });
+        same(liveBlock.get('a.a'), 'AA');
+        test.deepEqual(liveBlock.get('a.b'), { a: 'ABA', b: 'ABB' });
+
+        same(draftBlock.get('a.a'), 'AA');
+        test.deepEqual(draftBlock.get('a.b'), { a: 'ABA', b: 'ABB' });
       });
     });
 
     describe('when item is missing', function() {
       it('returns undefined', function() {
-        same(wurdLive.get('a.foo'), undefined);
-        same(wurdDraft.get('a.foo'), undefined);
+        const {liveBlock, draftBlock} = this;
+
+        same(liveBlock.get('a.foo'), undefined);
+        same(draftBlock.get('a.foo'), undefined);
       });
     });
   });
 
 
   describe('#text()', function() {
-    let wurdLive;
-    let wurdDraft;
-
     beforeEach(function() {
       let content = {
         a: {
@@ -72,37 +71,45 @@ describe('Wurd', function() {
         }
       };
 
-      wurdLive = new Wurd();
-      wurdLive.content = content;
+      this.liveBlock = new Block();
+      this.liveBlock.content = content;
 
-      wurdDraft = new Wurd();
-      wurdDraft.draft = true;
-      wurdDraft.content = content;
+      this.draftBlock = new Block();
+      this.draftBlock.draft = true;
+      this.draftBlock.content = content;
 
       sinon.stub(console, 'warn');
     });
 
     describe('when item exists', function() {
       it('returns the text content', function() {
-        same(wurdLive.text('a.a'), 'AA');
+        const {liveBlock, draftBlock} = this;
 
-        same(wurdDraft.text('a.a'), 'AA');
+        same(liveBlock.text('a.a'), 'AA');
+
+        same(draftBlock.text('a.a'), 'AA');
       });
     });
 
     describe('when item is missing', function() {
       it('returns empty string in live mode', function() {
-        same(wurdLive.text('a.foo'), '');
+        const {liveBlock, draftBlock} = this;
+
+        same(liveBlock.text('a.foo'), '');
       });
 
       it('returns path in draft mode', function() {
-        same(wurdDraft.text('a.foo'), '[a.foo]');
+        const {liveBlock, draftBlock} = this;
+
+        same(draftBlock.text('a.foo'), '[a.foo]');
       });
     });
 
     describe('when item is not text', function() {
       it('prints a warning to the console', function() {
-        wurdLive.text('a.b');
+        const {liveBlock, draftBlock} = this;
+
+        liveBlock.text('a.b');
 
         same(console.warn.callCount, 1);
 
@@ -110,21 +117,27 @@ describe('Wurd', function() {
       });
 
       it('returns empty string in live mode', function() {
-        same(wurdLive.text('a.b'), '');
+        const {liveBlock, draftBlock} = this;
+
+        same(liveBlock.text('a.b'), '');
       });
 
       it('returns path in draft mode', function() {
-        same(wurdDraft.text('a.b'), '[a.b]');
+        const {liveBlock, draftBlock} = this;
+
+        same(draftBlock.text('a.b'), '[a.b]');
       });
     });
 
     describe('with vars argument', function() {
       it('replaces {{mustache}} style placeholders with vars', function() {
-        same(wurdLive.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
+        const {liveBlock, draftBlock} = this;
         
-        same(wurdDraft.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
+        same(liveBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
+        
+        same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
       });
     });
-  });*/
+  });
 
 });
