@@ -258,6 +258,23 @@ module.exports = function () {
     }
 
     /**
+     * Gets HTML from Markdown content of an item by path (e.g. `section.item`).
+     * If the item is not a string, e.g. you have passed the path of an object,
+     * an empty string will be returned, unless in draft mode in which case a warning will be returned.
+     *
+     * @param {String} path       Item path e.g. `section.item`
+     * @param {Object} [vars]     Variables to replace in the text
+     *
+     * @return {Mixed}
+     */
+
+  }, {
+    key: 'markdown',
+    value: function markdown(path, vars) {
+      return marked(this.text(path, vars));
+    }
+
+    /**
      * Iterates over a collection / list object with the given callback.
      *
      * @param {String} path
@@ -310,23 +327,6 @@ module.exports = function () {
       }
 
       return childBlock;
-    }
-
-    /**
-     * Gets HTML from Markdown content of an item by path (e.g. `section.item`).
-     * If the item is not a string, e.g. you have passed the path of an object,
-     * an empty string will be returned, unless in draft mode in which case a warning will be returned.
-     *
-     * @param {String} path       Item path e.g. `section.item`
-     * @param {Object} [vars]     Variables to replace in the text
-     *
-     * @return {Mixed}
-     */
-
-  }, {
-    key: 'markdown',
-    value: function markdown(path, vars) {
-      return marked(this.text(path, vars));
     }
 
     /**
@@ -435,8 +435,8 @@ var Wurd = function () {
     this.draft = false;
     this.editMode = false;
 
-    // Object to store all content that's loaded
-    this.content = {};
+    this.content = null;
+    this.rawContent = {};
   }
 
   /**
@@ -507,7 +507,7 @@ var Wurd = function () {
         }
 
         // Return cached version if available
-        var sectionContent = _this2.content[path];
+        var sectionContent = _this2.rawContent[path];
 
         if (sectionContent) {
           debug && console.info('from cache: ', path);
@@ -539,15 +539,15 @@ var Wurd = function () {
 
           // Cache for next time
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          _extends(_this2.content, result);
+          _extends(_this2.rawContent, result);
 
-          var block = new _block2.default(appName, null, result, {
+          _this2.content = new _block2.default(appName, null, _this2.rawContent, {
             lang: _this2.lang,
             editMode: _this2.editMode,
             draft: _this2.draft
           });
 
-          resolve(block);
+          resolve(_this2.content);
         }).catch(function (err) {
           return reject(err);
         });

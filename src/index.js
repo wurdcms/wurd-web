@@ -14,8 +14,8 @@ class Wurd {
     this.draft = false;
     this.editMode = false;
 
-    // Object to store all content that's loaded
-    this.content = {};
+    this.content = null;
+    this.rawContent = {};
   }
 
   /**
@@ -71,7 +71,7 @@ class Wurd {
       }
 
       // Return cached version if available
-      let sectionContent = this.content[path];
+      let sectionContent = this.rawContent[path];
 
       if (sectionContent) {
         debug && console.info('from cache: ', path);
@@ -103,15 +103,15 @@ class Wurd {
 
           // Cache for next time
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          Object.assign(this.content, result);
+          Object.assign(this.rawContent, result);
 
-          const block = new Block(appName, null, result, {
+          this.content = new Block(appName, null, this.rawContent, {
             lang: this.lang,
             editMode: this.editMode,
             draft: this.draft
           });
 
-          resolve(block);
+          resolve(this.content);
         })
         .catch(err => reject(err));
     });
