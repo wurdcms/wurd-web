@@ -6,10 +6,10 @@ const {replaceVars} = require('./utils');
 
 module.exports = class Block {
 
-  constructor(app, path, content, options = {}) {
+  constructor(app, path, rawContent, options = {}) {
     this.app = app;
     this.path = path;
-    this.content = content;
+    this.rawContent = rawContent;
     this.options = options;
 
     this.lang = options.lang;
@@ -59,12 +59,12 @@ module.exports = class Block {
    * @return {Mixed}
    */
   get(path) {
-    const result = getValue(this.content, path);
+    const result = getValue(this.rawContent, path);
 
     // If an item is missing, check that the section has been loaded
     if (typeof result === 'undefined' && this.draft) {
       const section = path.split('.')[0];
-      const loadedSections = Object.keys(this.content);
+      const loadedSections = Object.keys(this.rawContent);
 
       if (!loadedSections.includes(section)) {
         console.warn(`Tried to access unloaded section: ${section}`);

@@ -14,8 +14,13 @@ class Wurd {
     this.draft = false;
     this.editMode = false;
 
-    this.content = null;
     this.rawContent = {};
+
+    this.content = new Block(null, null, this.rawContent, {
+      lang: this.lang,
+      editMode: this.editMode,
+      draft: this.draft
+    });
   }
 
   /**

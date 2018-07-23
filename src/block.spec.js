@@ -6,7 +6,7 @@ const Block = require('./block');
 const same = test.strictEqual;
 
 
-describe('Wurd', function() {
+describe('Block', function() {
   afterEach(function() {
     sinon.restore();
   });

@@ -1,7 +1,9 @@
 const test = require('assert');
 const sinon = require('sinon');
+
 const wurd = require('./');
 const Wurd = wurd.Wurd;
+const Block = require('./block');
 
 const same = test.strictEqual;
 
@@ -29,7 +31,9 @@ describe('Wurd', function() {
       same(client.draft, false);
       same(client.editMode, false);
       same(client.debug, undefined);
-      test.deepEqual(client.content, {});
+
+      test.deepEqual(client.rawContent, {});
+      test.ok(client.content instanceof Block);
     });
 
     describe('with options', function() {
