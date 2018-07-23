@@ -159,7 +159,7 @@ module.exports = class Block {
     const childBlock = new Block(this.app, blockPath, blockContent, this.options);
 
     if (typeof fn === 'function') {
-      fn.call(undefined, childBlock);
+      return fn.call(undefined, childBlock);
     }
 
     return childBlock;
