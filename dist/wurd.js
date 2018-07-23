@@ -143,7 +143,7 @@ var _require = __webpack_require__(0),
     replaceVars = _require.replaceVars;
 
 module.exports = function () {
-  function Block(app, path, content) {
+  function Block(app, path, rawContent) {
     var _this = this;
 
     var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
@@ -152,7 +152,7 @@ module.exports = function () {
 
     this.app = app;
     this.path = path;
-    this.content = content;
+    this.rawContent = rawContent;
     this.options = options;
 
     this.lang = options.lang;
@@ -209,12 +209,12 @@ module.exports = function () {
   }, {
     key: 'get',
     value: function get(path) {
-      var result = getValue(this.content, path);
+      var result = getValue(this.rawContent, path);
 
       // If an item is missing, check that the section has been loaded
       if (typeof result === 'undefined' && this.draft) {
         var section = path.split('.')[0];
-        var loadedSections = Object.keys(this.content);
+        var loadedSections = Object.keys(this.rawContent);
 
         if (!loadedSections.includes(section)) {
           console.warn('Tried to access unloaded section: ' + section);
@@ -323,7 +323,7 @@ module.exports = function () {
       var childBlock = new Block(this.app, blockPath, blockContent, this.options);
 
       if (typeof fn === 'function') {
-        fn.call(undefined, childBlock);
+        return fn.call(undefined, childBlock);
       }
 
       return childBlock;
@@ -435,8 +435,13 @@ var Wurd = function () {
     this.draft = false;
     this.editMode = false;
 
-    this.content = null;
     this.rawContent = {};
+
+    this.content = new _block2.default(null, null, this.rawContent, {
+      lang: this.lang,
+      editMode: this.editMode,
+      draft: this.draft
+    });
   }
 
   /**
