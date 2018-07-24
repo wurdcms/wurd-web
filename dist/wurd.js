@@ -440,7 +440,8 @@ var Wurd = function () {
     this.content = new _block2.default(null, null, this.rawContent, {
       lang: this.lang,
       editMode: this.editMode,
-      draft: this.draft
+      draft: this.draft,
+      blockHelpers: this.blockHelpers
     });
   }
 
@@ -549,7 +550,8 @@ var Wurd = function () {
           _this2.content = new _block2.default(appName, null, _this2.rawContent, {
             lang: _this2.lang,
             editMode: _this2.editMode,
-            draft: _this2.draft
+            draft: _this2.draft,
+            blockHelpers: _this2.blockHelpers
           });
 
           resolve(_this2.content);
@@ -580,6 +582,11 @@ var Wurd = function () {
       }
 
       document.getElementsByTagName('body')[0].appendChild(script);
+    }
+  }, {
+    key: 'setBlockHelpers',
+    value: function setBlockHelpers(helpers) {
+      this.blockHelpers = helpers;
     }
   }]);
 

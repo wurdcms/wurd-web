@@ -19,7 +19,8 @@ class Wurd {
     this.content = new Block(null, null, this.rawContent, {
       lang: this.lang,
       editMode: this.editMode,
-      draft: this.draft
+      draft: this.draft,
+      blockHelpers: this.blockHelpers
     });
   }
 
@@ -113,7 +114,8 @@ class Wurd {
           this.content = new Block(appName, null, this.rawContent, {
             lang: this.lang,
             editMode: this.editMode,
-            draft: this.draft
+            draft: this.draft,
+            blockHelpers: this.blockHelpers
           });
 
           resolve(this.content);
@@ -140,6 +142,10 @@ class Wurd {
     }
 
     document.getElementsByTagName('body')[0].appendChild(script);
+  }
+
+  setBlockHelpers(helpers) {
+    this.blockHelpers = helpers;
   }
 
 };

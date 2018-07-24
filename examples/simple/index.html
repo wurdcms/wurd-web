@@ -13,12 +13,6 @@
   <body class="container">
     <img data-wurd-img="home.heroImage" style="width: 100%" />
 
-    <h2 data-wurd="home.welcome.title"></h2>
-
-    <div data-wurd-md="home.welcome.intro" class="alert alert-info"></div>
-
-    <div data-wurd-md="home.welcome.markdown"></div>
-
 
     <script>
       var $ = document.querySelector.bind(document);
@@ -28,15 +22,40 @@
         lang: 'en'
       });
 
+      // You can create helper functions which are added to each content block
+      // These can be useful for creating HTML elements with CMS content or editors.
+      wurd.setBlockHelpers({
+        insertEl: function(type, id, vars, options) {
+          var block = this;
+
+          var el = document.createElement(type);
+
+          if (id) {
+            el.innerHTML = block.el(id, vars, options);
+          }
+
+          document.body.appendChild(el);
+
+          return block;
+        }
+      });
+
       wurd.load('nav,home')
         .catch(function(err) { console.error(err) })
         .then(function(content) {
           var page = content.block('home');
 
+          //You can add content to existing elements
           $('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
-          $('[data-wurd="home.welcome.title"]').innerText = page.text('welcome.title');
-          $('[data-wurd-md="home.welcome.intro"]').innerText = page.text('welcome.intro', { name: 'John' });
-          $('[data-wurd-md="home.welcome.markdown"]').innerHTML = page.markdown('welcome.markdown', { date: (new Date()).toLocaleString() });
+          
+          //However it is easier to use a helper to create them for you.
+          page
+            .insertEl('h2', 'welcome.title')
+            .insertEl('p', 'welcome.intro', { name: 'John' })
+            .insertEl('hr')
+            .insertEl('div', 'welcome.markdown', {
+              date: (new Date()).toLocaleString()
+            }, {markdown: true});
         });
     </script>
   </body>
