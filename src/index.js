@@ -26,7 +26,6 @@ class Wurd {
     // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
     ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(name => {
       this[name] = function() {
-        console.log(name, arguments);
         return this.content[name].apply(this.content, arguments);
       }.bind(this);
     });

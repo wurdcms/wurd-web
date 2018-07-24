@@ -449,7 +449,6 @@ var Wurd = function () {
     // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
     ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(function (name) {
       _this[name] = function () {
-        console.log(name, arguments);
         return this.content[name].apply(this.content, arguments);
       }.bind(_this);
     });
