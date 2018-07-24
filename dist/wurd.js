@@ -429,6 +429,8 @@ var API_URL = 'https://api-v3.wurd.io';
 
 var Wurd = function () {
   function Wurd() {
+    var _this = this;
+
     _classCallCheck(this, Wurd);
 
     this.appName = null;
@@ -442,6 +444,14 @@ var Wurd = function () {
       editMode: this.editMode,
       draft: this.draft,
       blockHelpers: this.blockHelpers
+    });
+
+    // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
+    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(function (name) {
+      _this[name] = function () {
+        console.log(name, arguments);
+        return this.content[name].apply(this.content, arguments);
+      }.bind(_this);
     });
   }
 
@@ -458,7 +468,7 @@ var Wurd = function () {
   _createClass(Wurd, [{
     key: 'connect',
     value: function connect(appName) {
-      var _this = this;
+      var _this2 = this;
 
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -468,7 +478,7 @@ var Wurd = function () {
       ['draft', 'lang', 'debug'].forEach(function (name) {
         var val = options[name];
 
-        if (typeof val !== 'undefined') _this[name] = val;
+        if (typeof val !== 'undefined') _this2[name] = val;
       });
 
       // Activate edit mode if required
@@ -501,7 +511,7 @@ var Wurd = function () {
   }, {
     key: 'load',
     value: function load(path) {
-      var _this2 = this;
+      var _this3 = this;
 
       var appName = this.appName,
           debug = this.debug;
@@ -513,7 +523,7 @@ var Wurd = function () {
         }
 
         // Return cached version if available
-        var sectionContent = _this2.rawContent[path];
+        var sectionContent = _this3.rawContent[path];
 
         if (sectionContent) {
           debug && console.info('from cache: ', path);
@@ -525,7 +535,7 @@ var Wurd = function () {
 
         // Build request URL
         var params = ['draft', 'lang'].reduce(function (memo, param) {
-          if (_this2[param]) memo[param] = _this2[param];
+          if (_this3[param]) memo[param] = _this3[param];
 
           return memo;
         }, {});
@@ -545,16 +555,16 @@ var Wurd = function () {
 
           // Cache for next time
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          _extends(_this2.rawContent, result);
+          _extends(_this3.rawContent, result);
 
-          _this2.content = new _block2.default(appName, null, _this2.rawContent, {
-            lang: _this2.lang,
-            editMode: _this2.editMode,
-            draft: _this2.draft,
-            blockHelpers: _this2.blockHelpers
+          _this3.content = new _block2.default(appName, null, _this3.rawContent, {
+            lang: _this3.lang,
+            editMode: _this3.editMode,
+            draft: _this3.draft,
+            blockHelpers: _this3.blockHelpers
           });
 
-          resolve(_this2.content);
+          resolve(_this3.content);
         }).catch(function (err) {
           return reject(err);
         });

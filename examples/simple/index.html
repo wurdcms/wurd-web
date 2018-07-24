@@ -53,6 +53,9 @@
             .insertEl('div', 'welcome.markdown', {
               date: (new Date()).toLocaleString()
             }, {markdown: true});
+
+          //You can also use the main wurd object as a shortcut to all loaded content
+          document.title = wurd.text('home.title');
         });
     </script>
   </body>
