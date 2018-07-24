@@ -27,12 +27,9 @@
       wurd.setBlockHelpers({
         insertEl: function(type, id, vars, options) {
           var block = this;
-
           var el = document.createElement(type);
 
-          if (id) {
-            el.innerHTML = block.el(id, vars, options);
-          }
+          if (id) el.innerHTML = block.el(id, vars, options);
 
           document.body.appendChild(el);
 
