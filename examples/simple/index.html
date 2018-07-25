@@ -13,6 +13,8 @@
   <body class="container">
     <img data-wurd-img="home.heroImage" style="width: 100%" />
 
+    <h2 data-wurd="home.welcome.title"></h2>
+
 
     <script>
       var $ = document.querySelector.bind(document);
@@ -44,10 +46,13 @@
 
           //You can add content to existing elements
           $('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
+
+          document.querySelectorAll('[data-wurd]').forEach(function(el) {
+            el.innerText = content.text(el.dataset.wurd);
+          });
           
-          //However it is easier to use a helper to create them for you.
+          //Or use helper to create them for you
           page
-            .insertEl('h2', 'welcome.title')
             .insertEl('p', 'welcome.intro', { name: 'John' })
             .insertEl('hr')
             .insertEl('div', 'welcome.markdown', {
