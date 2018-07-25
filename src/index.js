@@ -1,5 +1,6 @@
 import {encodeQueryString} from './utils';
 
+import Store from './store';
 import Block from './block';
 
 
@@ -14,9 +15,9 @@ class Wurd {
     this.draft = false;
     this.editMode = false;
 
-    this.rawContent = {};
+    this.store = new Store();
 
-    this.content = new Block(null, null, this.rawContent, {
+    this.content = new Block(null, null, this.store, {
       lang: this.lang,
       editMode: this.editMode,
       draft: this.draft,
@@ -76,7 +77,7 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {appName, debug} = this;
+    let {appName, store, debug} = this;
 
     return new Promise((resolve, reject) => {
       if (!appName) {
@@ -84,7 +85,7 @@ class Wurd {
       }
 
       // Return cached version if available
-      let sectionContent = this.rawContent[path];
+      let sectionContent = store.get(path);
 
       if (sectionContent) {
         debug && console.info('from cache: ', path);
@@ -116,7 +117,7 @@ class Wurd {
 
           // Cache for next time
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          Object.assign(this.rawContent, result);
+          store.setSections(result);
 
           this.content = new Block(appName, null, this.rawContent, {
             lang: this.lang,

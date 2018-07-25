@@ -1,15 +1,14 @@
 const marked = require('marked');
-const getValue = require('get-property-value');
 
 const {replaceVars} = require('./utils');
 
 
 module.exports = class Block {
 
-  constructor(app, path, rawContent, options = {}) {
+  constructor(app, path, store, options = {}) {
     this.app = app;
     this.path = path;
-    this.rawContent = rawContent;
+    this.store = store;
     this.options = options;
 
     this.lang = options.lang;
@@ -59,14 +58,13 @@ module.exports = class Block {
    * @return {Mixed}
    */
   get(path) {
-    const result = getValue(this.rawContent, path);
+    const result = this.store.get(path);
 
     // If an item is missing, check that the section has been loaded
     if (typeof result === 'undefined' && this.draft) {
       const section = path.split('.')[0];
-      const loadedSections = Object.keys(this.rawContent);
 
-      if (!loadedSections.includes(section)) {
+      if (!this.store.get(section)) {
         console.warn(`Tried to access unloaded section: ${section}`);
       }
     }
@@ -154,9 +152,8 @@ module.exports = class Block {
    */
   block(path, fn) {
     const blockPath = this.id(path);
-    const blockContent = this.get(path);
 
-    const childBlock = new Block(this.app, blockPath, blockContent, this.options);
+    const childBlock = new Block(this.app, blockPath, this.store, this.options);
 
     if (typeof fn === 'function') {
       return fn.call(undefined, childBlock);

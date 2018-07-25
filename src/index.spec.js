@@ -3,6 +3,7 @@ const sinon = require('sinon');
 
 const wurd = require('./');
 const Wurd = wurd.Wurd;
+const Store = require('./store');
 const Block = require('./block');
 
 const same = test.strictEqual;
@@ -32,7 +33,7 @@ describe('Wurd', function() {
       same(client.editMode, false);
       same(client.debug, undefined);
 
-      test.deepEqual(client.rawContent, {});
+      test.ok(client.store instanceof Store);
       test.ok(client.content instanceof Block);
     });
 

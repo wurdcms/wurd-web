@@ -1,6 +1,7 @@
 const test = require('assert');
 const sinon = require('sinon');
 
+const Store = require('./store');
 const Block = require('./block');
 
 const same = test.strictEqual;
@@ -34,7 +35,7 @@ describe('Block', function() {
 
   describe('#get()', function() {
     beforeEach(function() {
-      let content = {
+      const store = new Store({
         a: {
           a: 'AA',
           b: {
@@ -42,11 +43,11 @@ describe('Block', function() {
             b: 'ABB'
           }
         }
-      };
+      });
 
-      this.liveBlock = new Block('live', null, content);
+      this.liveBlock = new Block('live', null, store);
 
-      this.draftBlock = new Block('draft', null, content, {
+      this.draftBlock = new Block('draft', null, store, {
         draft: true
       });
 
@@ -82,7 +83,7 @@ describe('Block', function() {
 
   describe('#text()', function() {
     beforeEach(function() {
-      let content = {
+      const store = new Store({
         a: {
           a: 'AA',
           b: {
@@ -91,11 +92,11 @@ describe('Block', function() {
           },
           c: 'Hello {{name}}, today is {{day}}'
         }
-      };
+      });
 
-      this.liveBlock = new Block('live', null, content);
+      this.liveBlock = new Block('live', null, store);
 
-      this.draftBlock = new Block('draft', null, content, {
+      this.draftBlock = new Block('draft', null, store, {
         draft: true
       });
 
