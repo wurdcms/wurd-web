@@ -20,8 +20,7 @@ class Wurd {
     this.content = new Block(null, null, this.store, {
       lang: this.lang,
       editMode: this.editMode,
-      draft: this.draft,
-      blockHelpers: this.blockHelpers
+      draft: this.draft
     });
 
     // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
@@ -146,7 +145,7 @@ class Wurd {
   }
 
   setBlockHelpers(helpers) {
-    this.blockHelpers = helpers;
+    Object.assign(Block.prototype, helpers);
   }
 
 };

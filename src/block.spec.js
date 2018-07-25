@@ -35,7 +35,7 @@ describe('Block', function() {
 
   describe('#get()', function() {
     beforeEach(function() {
-      const store = new Store({
+      this.store = new Store({
         a: {
           a: 'AA',
           b: {
@@ -45,18 +45,16 @@ describe('Block', function() {
         }
       });
 
-      this.liveBlock = new Block('live', null, store);
-
-      this.draftBlock = new Block('draft', null, store, {
-        draft: true
-      });
-
       sinon.stub(console, 'warn');
     });
 
     describe('when item exists', function() {
       it('returns the content', function() {
-        const {liveBlock, draftBlock} = this;
+        const liveBlock = new Block('live', null, this.store);
+
+        const draftBlock = new Block('draft', null, this.store, {
+          draft: true
+        });
 
         same(liveBlock.get('a.a'), 'AA');
         test.deepEqual(liveBlock.get('a.b'), { a: 'ABA', b: 'ABB' });
@@ -64,11 +62,31 @@ describe('Block', function() {
         same(draftBlock.get('a.a'), 'AA');
         test.deepEqual(draftBlock.get('a.b'), { a: 'ABA', b: 'ABB' });
       });
+
+      it('returns the content for child blocks', function() {
+        const liveBlock = new Block('live', 'a.b', this.store);
+
+        const draftBlock = new Block('draft', 'a.b', this.store, {
+          draft: true
+        });
+
+        same(liveBlock.get('a'), 'ABA');
+        same(liveBlock.get('b'), 'ABB');
+        test.deepEqual(liveBlock.get(), { a: 'ABA', b: 'ABB' });
+
+        same(draftBlock.get('a'), 'ABA');
+        same(draftBlock.get('b'), 'ABB');
+        test.deepEqual(draftBlock.get(), { a: 'ABA', b: 'ABB' });
+      });
     });
 
     describe('when item is missing', function() {
       it('returns undefined', function() {
-        const {liveBlock, draftBlock} = this;
+        const liveBlock = new Block('live', null, this.store);
+
+        const draftBlock = new Block('draft', null, this.store, {
+          draft: true
+        });
 
         same(liveBlock.get('a.foo'), undefined);
         same(draftBlock.get('a.foo'), undefined);
