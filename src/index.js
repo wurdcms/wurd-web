@@ -119,13 +119,6 @@ class Wurd {
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
           store.setSections(result);
 
-          this.content = new Block(appName, null, this.rawContent, {
-            lang: this.lang,
-            editMode: this.editMode,
-            draft: this.draft,
-            blockHelpers: this.blockHelpers
-          });
-
           resolve(this.content);
         })
         .catch(err => reject(err));
