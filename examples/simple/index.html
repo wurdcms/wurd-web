@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
     <!-- Change to point to the file on your site or a CDN -->
-    <script src="dist/wurd.min.js"></script>
+    <script src="dist/wurd.js"></script>
   </head>
   <body class="container">
     <img data-wurd-img="home.heroImage" style="width: 100%" />
@@ -19,13 +19,6 @@
     <script>
       var $ = document.querySelector.bind(document);
 
-      wurd.connect('example', {
-        editMode: 'querystring', //Add ?edit to the page's querystring to activate editing mode
-        lang: 'en'
-      });
-
-      // You can create helper functions which are added to each content block
-      // These can be useful for creating HTML elements with CMS content or editors.
       wurd.setBlockHelpers({
         insertEl: function(type, id, vars, options) {
           var block = this;
@@ -38,6 +31,25 @@
           return block;
         }
       });
+
+      wurd.connect('example', {
+        editMode: 'querystring', //Add ?edit to the page's querystring to activate editing mode
+        lang: 'en',
+        blockHelpers: {
+          insertEl: function(type, id, vars, options) {
+          var block = this;
+          var el = document.createElement(type);
+
+          if (id) el.innerHTML = block.el(id, vars, options);
+
+          document.body.appendChild(el);
+
+          return block;
+        }
+        }
+      });
+
+      console.log(wurd.get('blak'))
 
       wurd.load('nav,home')
         .catch(function(err) { console.error(err) })

@@ -16,7 +16,7 @@ module.exports = class Block {
     this.draft = options.draft;
 
     // Ensure this is bound properly, required for when using object destructuring
-    // E.g. wurd.with('user', ({text}) => text('age'));
+    // E.g. wurd.block('user', ({text}) => text('age'));
     this.id = this.id.bind(this);
     this.get = this.get.bind(this);
     this.text = this.text.bind(this);
@@ -24,6 +24,16 @@ module.exports = class Block {
     this.block = this.block.bind(this);
     this.markdown = this.markdown.bind(this);
     this.el = this.el.bind(this);
+
+    // Add helper functions to the block for convenience.
+    // These are bound to the block for access to this.text(), this.get() etc.
+    if (options.blockHelpers) {
+      Object.keys(options.blockHelpers).forEach(key => {
+        const fn = options.blockHelpers[key];
+
+        this[key] = fn.bind(this);
+      });
+    }
   }
 
   /**

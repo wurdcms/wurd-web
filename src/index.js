@@ -10,6 +10,7 @@ const API_URL = 'https://api-v3.wurd.io';
 
 class Wurd {
 
+  /*
   constructor() {
     this.appName = null;
     this.draft = false;
@@ -29,7 +30,7 @@ class Wurd {
         return this.content[name].apply(this.content, arguments);
       }.bind(this);
     });
-  }
+  }*/
 
   /**
    * Sets up the default connection/instance
@@ -66,6 +67,23 @@ class Wurd {
       default:
         break;
     }
+
+    // Finish setup
+    this.store = new Store();
+
+    this.content = new Block(null, null, this.store, {
+      lang: this.lang,
+      editMode: this.editMode,
+      draft: this.draft,
+      blockHelpers: this.blockHelpers
+    });
+
+    // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
+    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach((name) => {
+      this[name] = function() {
+        return this.content[name].apply(this.content, arguments);
+      }.bind(this);
+    });
 
     return this;
   }
@@ -145,7 +163,7 @@ class Wurd {
   }
 
   setBlockHelpers(helpers) {
-    Object.assign(Block.prototype, helpers);
+    this.blockHelpers = helpers;
   }
 
 };

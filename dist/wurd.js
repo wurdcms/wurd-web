@@ -143,6 +143,8 @@ var _require = __webpack_require__(0),
 
 module.exports = function () {
   function Block(app, path, store) {
+    var _this = this;
+
     var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
     _classCallCheck(this, Block);
@@ -157,7 +159,7 @@ module.exports = function () {
     this.draft = options.draft;
 
     // Ensure this is bound properly, required for when using object destructuring
-    // E.g. wurd.with('user', ({text}) => text('age'));
+    // E.g. wurd.block('user', ({text}) => text('age'));
     this.id = this.id.bind(this);
     this.get = this.get.bind(this);
     this.text = this.text.bind(this);
@@ -165,6 +167,16 @@ module.exports = function () {
     this.block = this.block.bind(this);
     this.markdown = this.markdown.bind(this);
     this.el = this.el.bind(this);
+
+    // Add helper functions to the block for convenience.
+    // These are bound to the block for access to this.text(), this.get() etc.
+    if (options.blockHelpers) {
+      Object.keys(options.blockHelpers).forEach(function (key) {
+        var fn = options.blockHelpers[key];
+
+        _this[key] = fn.bind(_this);
+      });
+    }
   }
 
   /**
@@ -270,7 +282,7 @@ module.exports = function () {
   }, {
     key: 'map',
     value: function map(path, fn) {
-      var _this = this;
+      var _this2 = this;
 
       var listContent = this.get(path) || _defineProperty({}, Date.now(), {});
 
@@ -284,7 +296,7 @@ module.exports = function () {
         index++;
 
         var itemPath = [path, key].join('.');
-        var itemBlock = _this.block(itemPath);
+        var itemBlock = _this2.block(itemPath);
 
         return fn.call(undefined, itemBlock, currentIndex);
       });
@@ -450,8 +462,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _utils = __webpack_require__(0);
@@ -473,44 +483,42 @@ var API_URL = 'https://api-v3.wurd.io';
 
 var Wurd = function () {
   function Wurd() {
-    var _this = this;
-
     _classCallCheck(this, Wurd);
-
-    this.appName = null;
-    this.draft = false;
-    this.editMode = false;
-
-    this.store = new _store2.default();
-
-    this.content = new _block2.default(null, null, this.store, {
-      lang: this.lang,
-      editMode: this.editMode,
-      draft: this.draft
-    });
-
-    // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
-    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(function (name) {
-      _this[name] = function () {
-        return this.content[name].apply(this.content, arguments);
-      }.bind(_this);
-    });
   }
-
-  /**
-   * Sets up the default connection/instance
-   *
-   * @param {String} appName
-   * @param {Object} [options]
-   * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
-   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
-   */
-
 
   _createClass(Wurd, [{
     key: 'connect',
+
+
+    /*
+    constructor() {
+      this.appName = null;
+      this.draft = false;
+      this.editMode = false;
+       this.store = new Store();
+       this.content = new Block(null, null, this.store, {
+        lang: this.lang,
+        editMode: this.editMode,
+        draft: this.draft
+      });
+       // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
+      ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(name => {
+        this[name] = function() {
+          return this.content[name].apply(this.content, arguments);
+        }.bind(this);
+      });
+    }*/
+
+    /**
+     * Sets up the default connection/instance
+     *
+     * @param {String} appName
+     * @param {Object} [options]
+     * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
+     * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+     */
     value: function connect(appName) {
-      var _this2 = this;
+      var _this = this;
 
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -520,7 +528,7 @@ var Wurd = function () {
       ['draft', 'lang', 'debug'].forEach(function (name) {
         var val = options[name];
 
-        if (typeof val !== 'undefined') _this2[name] = val;
+        if (typeof val !== 'undefined') _this[name] = val;
       });
 
       // Activate edit mode if required
@@ -541,6 +549,23 @@ var Wurd = function () {
           break;
       }
 
+      // Finish setup
+      this.store = new _store2.default();
+
+      this.content = new _block2.default(null, null, this.store, {
+        lang: this.lang,
+        editMode: this.editMode,
+        draft: this.draft,
+        blockHelpers: this.blockHelpers
+      });
+
+      // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
+      ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(function (name) {
+        _this[name] = function () {
+          return this.content[name].apply(this.content, arguments);
+        }.bind(_this);
+      });
+
       return this;
     }
 
@@ -553,7 +578,7 @@ var Wurd = function () {
   }, {
     key: 'load',
     value: function load(path) {
-      var _this3 = this;
+      var _this2 = this;
 
       var appName = this.appName,
           store = this.store,
@@ -578,7 +603,7 @@ var Wurd = function () {
 
         // Build request URL
         var params = ['draft', 'lang'].reduce(function (memo, param) {
-          if (_this3[param]) memo[param] = _this3[param];
+          if (_this2[param]) memo[param] = _this2[param];
 
           return memo;
         }, {});
@@ -600,7 +625,7 @@ var Wurd = function () {
           // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
           store.setSections(result);
 
-          resolve(_this3.content);
+          resolve(_this2.content);
         }).catch(function (err) {
           return reject(err);
         });
@@ -632,7 +657,7 @@ var Wurd = function () {
   }, {
     key: 'setBlockHelpers',
     value: function setBlockHelpers(helpers) {
-      _extends(_block2.default.prototype, helpers);
+      this.blockHelpers = helpers;
     }
   }]);
 
