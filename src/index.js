@@ -10,28 +10,6 @@ const API_URL = 'https://api-v3.wurd.io';
 
 class Wurd {
 
-  /*
-  constructor() {
-    this.appName = null;
-    this.draft = false;
-    this.editMode = false;
-
-    this.store = new Store();
-
-    this.content = new Block(null, null, this.store, {
-      lang: this.lang,
-      editMode: this.editMode,
-      draft: this.draft
-    });
-
-    // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
-    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(name => {
-      this[name] = function() {
-        return this.content[name].apply(this.content, arguments);
-      }.bind(this);
-    });
-  }*/
-
   /**
    * Sets up the default connection/instance
    *
@@ -39,6 +17,7 @@ class Wurd {
    * @param {Object} [options]
    * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+   * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
    */
   connect(appName, options = {}) {
     this.appName = appName;
@@ -70,6 +49,10 @@ class Wurd {
 
     // Finish setup
     this.store = new Store();
+
+    if (options.blockHelpers) {
+      this.setBlockHelpers(options.blockHelpers);
+    }
 
     this.content = new Block(null, null, this.store, {
       lang: this.lang,

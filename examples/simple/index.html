@@ -19,37 +19,18 @@
     <script>
       var $ = document.querySelector.bind(document);
 
-      wurd.setBlockHelpers({
-        insertEl: function(type, id, vars, options) {
-          var block = this;
-          var el = document.createElement(type);
-
-          if (id) el.innerHTML = block.el(id, vars, options);
-
-          document.body.appendChild(el);
-
-          return block;
-        }
-      });
-
       wurd.connect('example', {
         editMode: 'querystring', //Add ?edit to the page's querystring to activate editing mode
-        lang: 'en',
         blockHelpers: {
           insertEl: function(type, id, vars, options) {
-          var block = this;
-          var el = document.createElement(type);
+            var el = document.createElement(type);
 
-          if (id) el.innerHTML = block.el(id, vars, options);
+            el.innerHTML = this.el(id, vars, options);
 
-          document.body.appendChild(el);
-
-          return block;
-        }
+            document.body.appendChild(el);
+          }
         }
       });
-
-      console.log(wurd.get('blak'))
 
       wurd.load('nav,home')
         .catch(function(err) { console.error(err) })
@@ -64,10 +45,9 @@
           });
           
           //Or use helpers to create them for you
-          page
-            .insertEl('p', 'welcome.intro', { name: 'John' })
-            .insertEl('hr')
-            .insertEl('div', 'welcome.markdown', {
+          page.insertEl('p', 'welcome.intro', { name: 'John' });
+
+          page.insertEl('div', 'welcome.markdown', {
               date: (new Date()).toLocaleString()
             }, {markdown: true});
 

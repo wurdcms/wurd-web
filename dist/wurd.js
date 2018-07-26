@@ -490,25 +490,6 @@ var Wurd = function () {
     key: 'connect',
 
 
-    /*
-    constructor() {
-      this.appName = null;
-      this.draft = false;
-      this.editMode = false;
-       this.store = new Store();
-       this.content = new Block(null, null, this.store, {
-        lang: this.lang,
-        editMode: this.editMode,
-        draft: this.draft
-      });
-       // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
-      ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(name => {
-        this[name] = function() {
-          return this.content[name].apply(this.content, arguments);
-        }.bind(this);
-      });
-    }*/
-
     /**
      * Sets up the default connection/instance
      *
@@ -516,6 +497,7 @@ var Wurd = function () {
      * @param {Object} [options]
      * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
      * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+     * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
      */
     value: function connect(appName) {
       var _this = this;
@@ -551,6 +533,10 @@ var Wurd = function () {
 
       // Finish setup
       this.store = new _store2.default();
+
+      if (options.blockHelpers) {
+        this.setBlockHelpers(options.blockHelpers);
+      }
 
       this.content = new _block2.default(null, null, this.store, {
         lang: this.lang,
