@@ -5,31 +5,22 @@ const {replaceVars} = require('./utils');
 
 module.exports = class Block {
 
-  constructor(app, path, store, options = {}) {
-    this.app = app;
+  constructor(wurd, path) {
+    this.wurd = wurd;
+    this.getValue = wurd.store.get.bind(wurd.store);
     this.path = path;
-    this.store = store;
-    this.options = options;
-
-    this.lang = options.lang;
-    this.editMode = options.editMode;
-    this.draft = options.draft;
 
     // Ensure this is bound properly, required for when using object destructuring
     // E.g. wurd.block('user', ({text}) => text('age'));
-    this.id = this.id.bind(this);
-    this.get = this.get.bind(this);
-    this.text = this.text.bind(this);
-    this.map = this.map.bind(this);
-    this.block = this.block.bind(this);
-    this.markdown = this.markdown.bind(this);
-    this.el = this.el.bind(this);
+    ['id', 'get', 'text', 'map', 'block', 'markdown', 'el'].forEach(name => {
+      this[name] = this[name].bind(this);
+    });
 
     // Add helper functions to the block for convenience.
     // These are bound to the block for access to this.text(), this.get() etc.
-    if (options.blockHelpers) {
-      Object.keys(options.blockHelpers).forEach(key => {
-        const fn = options.blockHelpers[key];
+    if (wurd.blockHelpers) {
+      Object.keys(wurd.blockHelpers).forEach(key => {
+        const fn = wurd.blockHelpers[key];
 
         this[key] = fn.bind(this);
       });
@@ -58,13 +49,13 @@ module.exports = class Block {
    * @return {Mixed}
    */
   get(path) {
-    const result = this.store.get(this.id(path));
+    const result = this.getValue(this.id(path));
 
     // If an item is missing, check that the section has been loaded
-    if (typeof result === 'undefined' && this.draft) {
+    if (typeof result === 'undefined' && this.wurd.draft) {
       const section = path.split('.')[0];
 
-      if (!this.store.get(section)) {
+      if (!this.getValue(section)) {
         console.warn(`Tried to access unloaded section: ${section}`);
       }
     }
@@ -86,13 +77,13 @@ module.exports = class Block {
     let text = this.get(path);
 
     if (typeof text === 'undefined') {
-      return (this.draft) ? `[${path}]` : '';
+      return (this.wurd.draft) ? `[${path}]` : '';
     }
 
     if (typeof text !== 'string') {
       console.warn(`Tried to get object as string: ${path}`);
 
-      return (this.draft) ? `[${path}]` : '';
+      return (this.wurd.draft) ? `[${path}]` : '';
     }
 
     if (vars) {
@@ -153,7 +144,7 @@ module.exports = class Block {
   block(path, fn) {
     const blockPath = this.id(path);
 
-    const childBlock = new Block(this.app, blockPath, this.store, this.options);
+    const childBlock = new Block(this.wurd, blockPath);
 
     if (typeof fn === 'function') {
       return fn.call(undefined, childBlock);
@@ -183,7 +174,7 @@ module.exports = class Block {
     const text = options.markdown ? this.markdown(path, vars) : this.text(path, vars);
     const editor = (vars || options.markdown) ? 'data-wurd-md' : 'data-wurd';
 
-    if (this.draft) {
+    if (this.wurd.draft) {
       let type = options.type || 'span';
 
       if (options.markdown) type = 'div';

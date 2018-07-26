@@ -10,6 +10,12 @@ const API_URL = 'https://api-v3.wurd.io';
 
 class Wurd {
 
+  constructor(appName, options) {
+    if (appName) {
+      this.connect(appName, options);
+    }
+  }
+
   /**
    * Sets up the default connection/instance
    *
@@ -18,9 +24,13 @@ class Wurd {
    * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
+   * @param {Object} [options.rawContent]         Content to populate the store with
    */
   connect(appName, options = {}) {
-    this.appName = appName;
+    this.app = appName;
+
+    this.draft = false;
+    this.editMode = false;
 
     // Set allowed options
     ['draft', 'lang', 'debug'].forEach(name => {
@@ -48,18 +58,13 @@ class Wurd {
     }
 
     // Finish setup
-    this.store = new Store();
+    this.store = new Store(options.rawContent || {});
 
     if (options.blockHelpers) {
       this.setBlockHelpers(options.blockHelpers);
     }
 
-    this.content = new Block(null, null, this.store, {
-      lang: this.lang,
-      editMode: this.editMode,
-      draft: this.draft,
-      blockHelpers: this.blockHelpers
-    });
+    this.content = new Block(this, null);
 
     // Add shortcut methods for fetching content e.g. wurd.get(), wurd.text()
     ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach((name) => {
@@ -77,10 +82,10 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {appName, store, debug} = this;
+    let {app, store, debug} = this;
 
     return new Promise((resolve, reject) => {
-      if (!appName) {
+      if (!app) {
         return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
       }
 
@@ -102,7 +107,7 @@ class Wurd {
         return memo;
       }, {});
 
-      const url = `${API_URL}/apps/${appName}/content/${path}?${encodeQueryString(params)}`;
+      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
 
       return fetch(url)
         .then(res => res.json())
@@ -126,7 +131,7 @@ class Wurd {
   }
 
   startEditor() {
-    let {appName, lang} = this;
+    let {app, lang} = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
@@ -136,7 +141,7 @@ class Wurd {
 
     script.src = WIDGET_URL;
     script.async = true;
-    script.setAttribute('data-app', appName);
+    script.setAttribute('data-app', app);
 
     if (lang) {
       script.setAttribute('data-lang', lang);

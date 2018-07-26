@@ -1,6 +1,7 @@
 const test = require('assert');
 const sinon = require('sinon');
 
+const Wurd = require('./index').Wurd;
 const Store = require('./store');
 const Block = require('./block');
 
@@ -16,7 +17,7 @@ describe('Block', function() {
   describe('#id()', function() {
     describe('with no path argument', function() {
       it('returns the block path', function() {
-        const block = new Block('appName', 'sectionName', {});
+        const block = new Block(new Wurd('foo'), 'sectionName');
 
         same(block.id(), 'sectionName');
       });
@@ -24,7 +25,7 @@ describe('Block', function() {
 
     describe('with path argument', function() {
       it('returns the full item path, with the block path', function() {
-        const block = new Block('appName', 'sectionName', {});
+        const block = new Block(new Wurd('foo'), 'sectionName');
 
         same(block.id('itemName'), 'sectionName.itemName');
         same(block.id('itemName.childItemName'), 'sectionName.itemName.childItemName');
@@ -35,7 +36,7 @@ describe('Block', function() {
 
   describe('#get()', function() {
     beforeEach(function() {
-      this.store = new Store({
+      const rawContent = {
         a: {
           a: 'AA',
           b: {
@@ -43,6 +44,15 @@ describe('Block', function() {
             b: 'ABB'
           }
         }
+      };
+
+      this.liveWurd = new Wurd('live', {
+        rawContent
+      });
+
+      this.draftWurd = new Wurd('draft', {
+        draft: true, 
+        rawContent
       });
 
       sinon.stub(console, 'warn');
@@ -50,11 +60,10 @@ describe('Block', function() {
 
     describe('when item exists', function() {
       it('returns the content', function() {
-        const liveBlock = new Block('live', null, this.store);
+        const {liveWurd, draftWurd} = this;
 
-        const draftBlock = new Block('draft', null, this.store, {
-          draft: true
-        });
+        const liveBlock = new Block(liveWurd);
+        const draftBlock = new Block(draftWurd);
 
         same(liveBlock.get('a.a'), 'AA');
         test.deepEqual(liveBlock.get('a.b'), { a: 'ABA', b: 'ABB' });
@@ -64,11 +73,10 @@ describe('Block', function() {
       });
 
       it('returns the content for child blocks', function() {
-        const liveBlock = new Block('live', 'a.b', this.store);
+        const {liveWurd, draftWurd} = this;
 
-        const draftBlock = new Block('draft', 'a.b', this.store, {
-          draft: true
-        });
+        const liveBlock = new Block(liveWurd, 'a.b');
+        const draftBlock = new Block(draftWurd, 'a.b');
 
         same(liveBlock.get('a'), 'ABA');
         same(liveBlock.get('b'), 'ABB');
@@ -82,11 +90,10 @@ describe('Block', function() {
 
     describe('when item is missing', function() {
       it('returns undefined', function() {
-        const liveBlock = new Block('live', null, this.store);
+        const {liveWurd, draftWurd} = this;
 
-        const draftBlock = new Block('draft', null, this.store, {
-          draft: true
-        });
+        const liveBlock = new Block(liveWurd, null);
+        const draftBlock = new Block(draftWurd, null);
 
         same(liveBlock.get('a.foo'), undefined);
         same(draftBlock.get('a.foo'), undefined);
@@ -101,7 +108,7 @@ describe('Block', function() {
 
   describe('#text()', function() {
     beforeEach(function() {
-      const store = new Store({
+      const rawContent = {
         a: {
           a: 'AA',
           b: {
@@ -110,13 +117,11 @@ describe('Block', function() {
           },
           c: 'Hello {{name}}, today is {{day}}'
         }
-      });
+      };
 
-      this.liveBlock = new Block('live', null, store);
+      this.liveBlock = new Block(new Wurd('live', {rawContent}), null);
 
-      this.draftBlock = new Block('draft', null, store, {
-        draft: true
-      });
+      this.draftBlock = new Block(new Wurd('draft', {rawContent, draft: true}), null);
 
       sinon.stub(console, 'warn');
     });

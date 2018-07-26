@@ -28,13 +28,15 @@ describe('Wurd', function() {
     it('configures the client', function() {
       let client = wurd.connect('appname');
 
-      same(client.appName, 'appname');
+      same(client.app, 'appname');
       same(client.draft, false);
       same(client.editMode, false);
       same(client.debug, undefined);
 
       test.ok(client.store instanceof Store);
       test.ok(client.content instanceof Block);
+
+      same(client.content.wurd, client);
     });
 
     describe('with options', function() {
