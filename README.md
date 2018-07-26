@@ -15,12 +15,12 @@ wurd.connect('myApp', {
 });
 
 wurd.load('homepage,shared')
-  .then(cms => {
+  .then(content => {
     //Use getters for accessing content
-    cms.text('homepage.title'); // 'Hello world'
+    content.text('homepage.title'); // 'Hello world'
 
     // Use blocks for accessing subsections of content
-    var page = cms.block('homepage');
+    var page = content.block('homepage');
 
     page.text('title'); // 'Hello world'
 
