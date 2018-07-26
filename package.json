@@ -23,7 +23,7 @@
     "get-property-value": "^2.0.0",
     "marked": "^0.4.0",
     "mocha": "5.2.x",
-    "serve": "9.3.x",
+    "serve": "9.4.x",
     "sinon": "6.1.x",
     "webpack": "2.4.1",
     "yargs": "7.1.0"
