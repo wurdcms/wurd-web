@@ -10,13 +10,23 @@ If rendering on the server, use the API or [wurd-node](https://github.com/wurdcm
 ```javascript
 import wurd from 'wurd-web';
 
-wurd.connect('myApp');
+wurd.connect('myApp', {
+  editMode: true
+});
 
-wurd.load('homepage,common')
-  .then(content => {
-    console.log(content); // { homepage: { title: 'Hello world' }, common: {...} }
+wurd.load('homepage,shared')
+  .then(cms => {
+    //Use getters for accessing content
+    cms.text('homepage.title'); // 'Hello world'
 
-    console.log(wurd.get('homepage.title')); // 'Hello world'
+    // Use blocks for accessing subsections of content
+    var page = cms.block('homepage');
+
+    page.text('title'); // 'Hello world'
+
+    page.map('team', item => {
+      item.text('name'); // 'John Smith'
+    });
   });
 ```
 

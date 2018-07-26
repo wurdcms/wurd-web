@@ -17,10 +17,11 @@
 
 
     <script>
-      var $ = document.querySelector.bind(document);
-
       wurd.connect('example', {
-        editMode: 'querystring', //Add ?edit to the page's querystring to activate editing mode
+        //Turn edit mode on when `?edit` is added to the page URL
+        editMode: 'querystring',
+        
+        //Define helpers to create editable regions etc.
         blockHelpers: {
           insertEl: function(type, id, vars, options) {
             var el = document.createElement(type);
@@ -34,25 +35,28 @@
 
       wurd.load('nav,home')
         .catch(function(err) { console.error(err) })
-        .then(function(content) {
-          var page = content.block('home');
+        .then(function(cms) {
+          //The cms object provides access to all loaded content
+          document.title = cms.text('home.title');
+
+          //Create blocks for easier access to child content
+          var page = cms.block('home');
+
+          console.log(page)
 
           //You can add content to existing elements
-          $('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
+          document.querySelector('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
 
           document.querySelectorAll('[data-wurd]').forEach(function(el) {
-            el.innerText = content.text(el.dataset.wurd);
+            el.innerText = cms.text(el.dataset.wurd);
           });
           
           //Or use helpers to create them for you
           page.insertEl('p', 'welcome.intro', { name: 'John' });
 
           page.insertEl('div', 'welcome.markdown', {
-              date: (new Date()).toLocaleString()
-            }, {markdown: true});
-
-          //You can also use the main wurd object as a shortcut to all loaded content
-          document.title = wurd.text('home.title');
+            date: (new Date()).toLocaleString()
+          }, {markdown: true});
         });
     </script>
   </body>
