@@ -7,8 +7,12 @@ module.exports = class Block {
 
   constructor(wurd, path) {
     this.wurd = wurd;
-    this.getValue = wurd.store.get.bind(wurd.store);
     this.path = path;
+
+    // Private shortcut to the main content getter
+    // TODO: Make a proper private variable
+    // See http://voidcanvas.com/es6-private-variables/ - but could require Babel Polyfill to be included
+    this._get = wurd.store.get.bind(wurd.store);
 
     // Ensure this is bound properly, required for when using object destructuring
     // E.g. wurd.block('user', ({text}) => text('age'));
@@ -49,13 +53,13 @@ module.exports = class Block {
    * @return {Mixed}
    */
   get(path) {
-    const result = this.getValue(this.id(path));
+    const result = this._get(this.id(path));
 
     // If an item is missing, check that the section has been loaded
     if (typeof result === 'undefined' && this.wurd.draft) {
       const section = path.split('.')[0];
 
-      if (!this.getValue(section)) {
+      if (!this._get(section)) {
         console.warn(`Tried to access unloaded section: ${section}`);
       }
     }
