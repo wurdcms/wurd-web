@@ -66,9 +66,8 @@
           // Use blocks created before .connect() and load() were called
           console.log(preConnectBlock.text('title'));
 
-          // Use the helpers() to get bound block methods that can be used
-          // with object destructuring for the shortest getters.
-          var {text, insertEl} = cms.helpers('home');
+          // Object destructuring allows for the shortest getters.
+          var {text, insertEl} = cms.block('home');
           
           console.log(text('footer'));
           insertEl('footer', 'footer');

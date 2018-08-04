@@ -14,11 +14,11 @@ class Wurd {
     this.store = new Store();
     this.content = new Block(this, null);
 
-    // Add shortcut methods for accessing content
-    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach((name) => {
-      this[name] = function() {
-        return this.content[name].apply(this.content, arguments);
-      }.bind(this);
+    // Add block shortcut methods to the main Wurd instance
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
+
+    methodNames.forEach(name => {
+      this[name] = this.content[name].bind(this.content);
     });
 
     this.connect(appName, options);

@@ -13,6 +13,16 @@ module.exports = class Block {
     // TODO: Make a proper private variable
     // See http://voidcanvas.com/es6-private-variables/ - but could require Babel Polyfill to be included
     this._get = wurd.store.get.bind(wurd.store);
+
+    // Bind methods to the instance to enable 'this' to be available
+    // to own methods and added helper methods;
+    // This also allows object destructuring, for example:
+    // `const {text} = wurd.block('home')`
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+
+    methodNames.forEach(name => {
+      this[name] = this[name].bind(this);
+    });
   }
 
   /**
@@ -180,6 +190,7 @@ module.exports = class Block {
    *
    * @return {Object}
    */
+  /*
   helpers(path) {
     const block = path ? this.block(path) : this;
 
@@ -194,5 +205,6 @@ module.exports = class Block {
 
     return boundMethods;
   }
+  */
 
 };

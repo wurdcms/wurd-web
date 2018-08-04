@@ -143,6 +143,8 @@ var _require = __webpack_require__(0),
 
 module.exports = function () {
   function Block(wurd, path) {
+    var _this = this;
+
     _classCallCheck(this, Block);
 
     this.wurd = wurd;
@@ -152,6 +154,16 @@ module.exports = function () {
     // TODO: Make a proper private variable
     // See http://voidcanvas.com/es6-private-variables/ - but could require Babel Polyfill to be included
     this._get = wurd.store.get.bind(wurd.store);
+
+    // Bind methods to the instance to enable 'this' to be available
+    // to own methods and added helper methods;
+    // This also allows object destructuring, for example:
+    // `const {text} = wurd.block('home')`
+    var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+
+    methodNames.forEach(function (name) {
+      _this[name] = _this[name].bind(_this);
+    });
   }
 
   /**
@@ -257,7 +269,7 @@ module.exports = function () {
   }, {
     key: 'map',
     value: function map(path, fn) {
-      var _this = this;
+      var _this2 = this;
 
       var listContent = this.get(path) || _defineProperty({}, Date.now(), {});
 
@@ -271,7 +283,7 @@ module.exports = function () {
         index++;
 
         var itemPath = [path, key].join('.');
-        var itemBlock = _this.block(itemPath);
+        var itemBlock = _this2.block(itemPath);
 
         return fn.call(undefined, itemBlock, currentIndex);
       });
@@ -345,23 +357,19 @@ module.exports = function () {
      *
      * @return {Object}
      */
-
-  }, {
-    key: 'helpers',
-    value: function helpers(path) {
-      var block = path ? this.block(path) : this;
-
-      var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(block));
-
-      var boundMethods = methodNames.reduce(function (memo, name) {
+    /*
+    helpers(path) {
+      const block = path ? this.block(path) : this;
+       const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(block));
+       const boundMethods = methodNames.reduce((memo, name) => {
         if (name === 'constructor') return memo;
-
-        memo[name] = block[name].bind(block);
+         memo[name] = block[name].bind(block);
         return memo;
       }, {});
-
-      return boundMethods;
+       return boundMethods;
     }
+    */
+
   }]);
 
   return Block;
@@ -492,11 +500,11 @@ var Wurd = function () {
     this.store = new _store2.default();
     this.content = new _block2.default(this, null);
 
-    // Add shortcut methods for accessing content
-    ['id', 'get', 'text', 'markdown', 'map', 'block', 'el'].forEach(function (name) {
-      _this[name] = function () {
-        return this.content[name].apply(this.content, arguments);
-      }.bind(_this);
+    // Add block shortcut methods to the main Wurd instance
+    var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
+
+    methodNames.forEach(function (name) {
+      _this[name] = _this.content[name].bind(_this.content);
     });
 
     this.connect(appName, options);
