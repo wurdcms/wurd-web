@@ -11,8 +11,8 @@
     "example": "serve examples/simple"
   },
   "devDependencies": {
-    "babel-cli": "6.24.1",
-    "babel-core": "6.24.1",
+    "babel-cli": "6.26.x",
+    "babel-core": "6.26.x",
     "babel-eslint": "7.2.3",
     "babel-loader": "7.0.0",
     "babel-plugin-add-module-exports": "0.2.1",
@@ -21,12 +21,12 @@
     "eslint": "3.19.0",
     "eslint-loader": "1.7.1",
     "get-property-value": "^2.0.0",
-    "marked": "^0.4.0",
+    "marked": "0.6.x",
     "mocha": "5.2.x",
-    "serve": "9.4.x",
-    "sinon": "6.1.x",
+    "serve": "10.1.x",
+    "sinon": "7.2.x",
     "webpack": "2.4.1",
-    "yargs": "7.1.0"
+    "yargs": "12.0.x"
   },
   "keywords": [
     "cms",
