@@ -1,7 +1,7 @@
 const test = require('assert');
 const sinon = require('sinon');
 
-const Wurd = require('./index').Wurd;
+const Wurd = require('./').default.Wurd;
 const Store = require('./store');
 const Block = require('./block');
 

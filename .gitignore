@@ -1,2 +1,5 @@
 node_modules
 .DS_Store
+
+# no need for package-lock for libs
+package-lock.json
