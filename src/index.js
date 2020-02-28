@@ -1,4 +1,4 @@
-import {encodeQueryString} from './utils';
+import { encodeQueryString } from './utils';
 
 import Store from './store';
 import Block from './block';

@@ -1,8 +1,6 @@
 {
   "parserOptions": {
-    "ecmaFeatures": {
-      "jsx": true
-    },
+    "ecmaFeatures": {},
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
@@ -25,8 +23,6 @@
     "expect": true,
     "sinon": true
   },
-
-  "parser": "babel-eslint",
 
   "plugins": [],
 

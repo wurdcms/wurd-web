@@ -1,9 +1,10 @@
 const test = require('assert');
 const sinon = require('sinon');
 
-const Wurd = require('./').default.Wurd;
-const Store = require('./store');
-const Block = require('./block');
+import wurd from './';
+import Block from './block';
+
+const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 

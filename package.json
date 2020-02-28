@@ -1,31 +1,31 @@
 {
   "name": "wurd-web",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "description": "Vanilla JS browser client for the Wurd CMS",
-  "main": "dist/wurd.js",
+  "main": "dist/wurd.cjs.js",
+  "module": "dist/wurd.esm.js",
+  "browser": "dist/wurd.js",
   "scripts": {
-    "build": "NODE_ENV=production webpack",
-    "dev": "webpack --progress --colors --watch",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
     "test": "mocha --require @babel/register --colors ./src/*.spec.js",
     "test:watch": "mocha --require @babel/register --colors -w ./src/*.spec.js",
     "example": "serve examples/simple"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.6",
     "@babel/preset-env": "^7.8.6",
     "@babel/register": "^7.8.6",
-    "babel-eslint": "^10.1.0",
-    "babel-loader": "^8.0.6",
-    "eslint": "^6.8.0",
-    "eslint-loader": "^3.0.3",
-    "get-property-value": "^2.0.0",
-    "marked": "^0.8.0",
     "mocha": "^7.1.0",
+    "rollup": "^1.32.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-filesize": "^6.2.1",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-uglify": "^6.0.4",
     "serve": "^11.3.0",
-    "sinon": "^9.0.0",
-    "webpack": "^4.41.6",
-    "webpack-cli": "^3.3.11"
+    "sinon": "^9.0.0"
   },
   "keywords": [
     "cms",
@@ -35,7 +35,10 @@
   ],
   "author": "Charles Davison",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "get-property-value": "^2.0.0",
+    "marked": "^0.8.0"
+  },
   "files": [
     "*.md",
     "dist",

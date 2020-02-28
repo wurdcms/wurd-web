@@ -1,7 +1,7 @@
-const getValue = require('get-property-value');
+import getValue from 'get-property-value';
 
 
-module.exports = class Store {
+export default class Store {
 
   /**
    * @param {Object} rawContent       Initial content
