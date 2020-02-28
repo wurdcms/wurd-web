@@ -37,14 +37,21 @@ export default [
     ]
   },
 
-  // CommonJS (for Node) and ES module (for bundlers) build.
+  // CommonJS (for Node)
   {
     input: 'src/index.js',
     external: ['get-property-value', 'marked'],
-    output: [
-      { file: pkg.main, format: 'cjs' },
-      { file: pkg.module, format: 'es' }
-    ],
+    output: { file: pkg.main, format: 'cjs' },
     plugins: []
-  }
+  },
+
+  // ES module (for bundlers) build.
+  {
+    input: 'src/index.js',
+    external: ['get-property-value', 'marked'],
+    output: { file: pkg.module, format: 'es' },
+    plugins: [
+      babel(),
+    ]
+  },
 ];
