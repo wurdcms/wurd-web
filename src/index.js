@@ -1,4 +1,4 @@
-import {encodeQueryString} from './utils';
+import { encodeQueryString } from './utils';
 
 import Store from './store';
 import Block from './block';
@@ -9,7 +9,6 @@ const API_URL = 'https://api-v3.wurd.io';
 
 
 class Wurd {
-
   constructor(appName, options) {
     this.store = new Store();
     this.content = new Block(this, null);
@@ -82,7 +81,7 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {app, store, debug} = this;
+    let { app, store, debug } = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
@@ -131,7 +130,7 @@ class Wurd {
   }
 
   startEditor() {
-    let {app, lang} = this;
+    let { app, lang } = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
@@ -153,8 +152,7 @@ class Wurd {
   setBlockHelpers(helpers) {
     Object.assign(Block.prototype, helpers);
   }
-
-};
+}
 
 
 const instance = new Wurd();

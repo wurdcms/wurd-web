@@ -12,7 +12,7 @@ module.exports = {
     filename: `${libraryName}${mode === 'production' ? '.min' : ''}.js`,
     library: libraryName,
     libraryTarget: 'umd',
-    libraryExport: 'default',
+    // libraryExport: 'default',
     umdNamedDefine: true
   },
   module: {

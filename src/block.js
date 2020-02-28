@@ -1,10 +1,9 @@
-const marked = require('marked');
+import marked from 'marked';
 
-const {replaceVars} = require('./utils');
+import { replaceVars } from './utils';
 
 
-module.exports = class Block {
-
+export default class Block {
   constructor(wurd, path) {
     this.wurd = wurd;
     this.path = path;
@@ -206,5 +205,4 @@ module.exports = class Block {
     return boundMethods;
   }
   */
-
-};
+}
