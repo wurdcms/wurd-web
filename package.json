@@ -4,7 +4,6 @@
   "description": "Vanilla JS browser client for the Wurd CMS",
   "main": "dist/wurd.cjs.js",
   "module": "dist/wurd.esm.js",
-  "browser": "dist/wurd.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -37,6 +36,9 @@
   "license": "MIT",
   "dependencies": {
     "get-property-value": "^2.0.0",
+    "marked": "^0.8.0"
+  },
+  "peerDependencies": {
     "marked": "^0.8.0"
   },
   "files": [
