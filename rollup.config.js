@@ -40,7 +40,7 @@ export default [
   // CommonJS (for Node)
   {
     input: 'src/index.js',
-    external: ['get-property-value', 'marked'],
+    external: ['marked'],
     output: { file: pkg.main, format: 'cjs' },
     plugins: []
   },
@@ -48,7 +48,7 @@ export default [
   // ES module (for bundlers) build.
   {
     input: 'src/index.js',
-    external: ['get-property-value', 'marked'],
+    external: ['marked'],
     output: { file: pkg.module, format: 'es' },
     plugins: [
       babel(),

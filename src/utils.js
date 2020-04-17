@@ -3,7 +3,7 @@
  *
  * @return {String}
  */
-export const encodeQueryString = function(data) {
+export function encodeQueryString(data) {
   let parts = Object.keys(data).map(key => {
     let value = data[key];
 
@@ -22,7 +22,7 @@ export const encodeQueryString = function(data) {
  *
  * @return {String}
  */
-export const replaceVars = function(text, vars = {}) {
+export function replaceVars(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
   Object.keys(vars).forEach(key => {
@@ -33,3 +33,5 @@ export const replaceVars = function(text, vars = {}) {
 
   return text;
 };
+
+export const getValue = (obj, path) => path.split('.').reduce((o, k) => o[k], obj);

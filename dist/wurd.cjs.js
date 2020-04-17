@@ -2,7 +2,6 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var getValue = _interopDefault(require('get-property-value'));
 var marked = _interopDefault(require('marked'));
 
 /**
@@ -10,7 +9,7 @@ var marked = _interopDefault(require('marked'));
  *
  * @return {String}
  */
-const encodeQueryString = function(data) {
+function encodeQueryString(data) {
   let parts = Object.keys(data).map(key => {
     let value = data[key];
 
@@ -18,8 +17,7 @@ const encodeQueryString = function(data) {
   });
 
   return parts.join('&');
-};
-
+}
 
 /**
  * Replaces {{mustache}} style placeholders in text with variables
@@ -29,7 +27,7 @@ const encodeQueryString = function(data) {
  *
  * @return {String}
  */
-const replaceVars = function(text, vars = {}) {
+function replaceVars(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
   Object.keys(vars).forEach(key => {
@@ -39,7 +37,8 @@ const replaceVars = function(text, vars = {}) {
   });
 
   return text;
-};
+}
+const getValue = (obj, path) => path.split('.').reduce((o, k) => o[k], obj);
 
 class Store {
 

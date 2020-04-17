@@ -1,4 +1,4 @@
-import getValue from 'get-property-value';
+import { getValue } from './utils';
 
 
 export default class Store {

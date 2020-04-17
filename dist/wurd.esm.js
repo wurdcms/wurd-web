@@ -1,4 +1,3 @@
-import getValue from 'get-property-value';
 import marked from 'marked';
 
 function _classCallCheck(instance, Constructor) {
@@ -43,13 +42,13 @@ function _defineProperty(obj, key, value) {
  *
  * @return {String}
  */
-var encodeQueryString = function encodeQueryString(data) {
+function encodeQueryString(data) {
   var parts = Object.keys(data).map(function (key) {
     var value = data[key];
     return encodeURIComponent(key) + '=' + encodeURIComponent(value);
   });
   return parts.join('&');
-};
+}
 /**
  * Replaces {{mustache}} style placeholders in text with variables
  *
@@ -59,7 +58,7 @@ var encodeQueryString = function encodeQueryString(data) {
  * @return {String}
  */
 
-var replaceVars = function replaceVars(text) {
+function replaceVars(text) {
   var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   if (typeof text !== 'string') return text;
   Object.keys(vars).forEach(function (key) {
@@ -67,6 +66,11 @@ var replaceVars = function replaceVars(text) {
     text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
   });
   return text;
+}
+var getValue = function getValue(obj, path) {
+  return path.split('.').reduce(function (o, k) {
+    return o[k];
+  }, obj);
 };
 
 var Store = /*#__PURE__*/function () {
