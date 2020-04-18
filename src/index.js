@@ -1,5 +1,3 @@
-import { encodeQueryString } from './utils';
-
 import Store from './store';
 import Block from './block';
 
@@ -82,7 +80,7 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {app, store, debug} = this;
+    let { app, store, debug } = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
@@ -107,7 +105,7 @@ class Wurd {
         return memo;
       }, {});
 
-      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
+      const url = `${API_URL}/apps/${app}/content/${path}?${new URLSearchParams(params)}`;
 
       return fetch(url)
         .then(res => res.json())
@@ -131,7 +129,7 @@ class Wurd {
   }
 
   startEditor() {
-    let {app, lang} = this;
+    let { app, lang } = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;

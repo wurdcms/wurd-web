@@ -1,20 +1,4 @@
 /**
- * @param {Object} data
- *
- * @return {String}
- */
-export function encodeQueryString(data) {
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
-
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-
-  return parts.join('&');
-};
-
-
-/**
  * Replaces {{mustache}} style placeholders in text with variables
  *
  * @param {String} text
@@ -29,6 +13,7 @@ export function replaceVars(text, vars = {}) {
     let val = vars[key];
 
     text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
+    // Todo use https://github.com/tc39/proposal-string-replaceall in the future
   });
 
   return text;

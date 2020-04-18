@@ -5,21 +5,6 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var marked = _interopDefault(require('marked'));
 
 /**
- * @param {Object} data
- *
- * @return {String}
- */
-function encodeQueryString(data) {
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
-
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-
-  return parts.join('&');
-}
-
-/**
  * Replaces {{mustache}} style placeholders in text with variables
  *
  * @param {String} text
@@ -34,6 +19,7 @@ function replaceVars(text, vars = {}) {
     let val = vars[key];
 
     text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
+    // Todo use https://github.com/tc39/proposal-string-replaceall in the future
   });
 
   return text;
@@ -348,7 +334,7 @@ class Wurd {
    * @param {String} path     Section path e.g. `section`
    */
   load(path) {
-    let {app, store, debug} = this;
+    let { app, store, debug } = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
@@ -373,7 +359,7 @@ class Wurd {
         return memo;
       }, {});
 
-      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
+      const url = `${API_URL}/apps/${app}/content/${path}?${new URLSearchParams(params)}`;
 
       return fetch(url)
         .then(res => res.json())
@@ -397,7 +383,7 @@ class Wurd {
   }
 
   startEditor() {
-    let {app, lang} = this;
+    let { app, lang } = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;

@@ -38,18 +38,6 @@ function _defineProperty(obj, key, value) {
 }
 
 /**
- * @param {Object} data
- *
- * @return {String}
- */
-function encodeQueryString(data) {
-  var parts = Object.keys(data).map(function (key) {
-    var value = data[key];
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-  return parts.join('&');
-}
-/**
  * Replaces {{mustache}} style placeholders in text with variables
  *
  * @param {String} text
@@ -57,13 +45,12 @@ function encodeQueryString(data) {
  *
  * @return {String}
  */
-
 function replaceVars(text) {
   var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   if (typeof text !== 'string') return text;
   Object.keys(vars).forEach(function (key) {
     var val = vars[key];
-    text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
+    text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val); // Todo use https://github.com/tc39/proposal-string-replaceall in the future
   });
   return text;
 }
@@ -429,7 +416,7 @@ var Wurd = /*#__PURE__*/function () {
           if (_this3[param]) memo[param] = _this3[param];
           return memo;
         }, {});
-        var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(path, "?").concat(encodeQueryString(params));
+        var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(path, "?").concat(new URLSearchParams(params));
         return fetch(url).then(function (res) {
           return res.json();
         }).then(function (result) {
