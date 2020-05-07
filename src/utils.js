@@ -1,20 +1,4 @@
 /**
- * @param {Object} data
- *
- * @return {String}
- */
-export const encodeQueryString = function(data) {
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
-
-    return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-  });
-
-  return parts.join('&');
-};
-
-
-/**
  * Replaces {{mustache}} style placeholders in text with variables
  *
  * @param {String} text
@@ -22,14 +6,28 @@ export const encodeQueryString = function(data) {
  *
  * @return {String}
  */
-export const replaceVars = function(text, vars = {}) {
+export function replaceVars(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
-  Object.keys(vars).forEach(key => {
-    let val = vars[key];
-
+  Object.entries(vars).forEach(([key, val]) => {
     text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
   });
 
   return text;
 };
+
+
+
+/**
+ * Returns the key for caching a block of content, including the language
+ *
+ * @param {String} containerId
+ * @param {Object} [options]
+ *
+ * @return {String} cacheId
+ */
+export function getCacheId(containerId, options = {}) {
+  const lang = options.lang || '';
+
+  return `${lang}/${containerId}`;
+}

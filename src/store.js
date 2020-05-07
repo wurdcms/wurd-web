@@ -11,19 +11,19 @@ export default class Store {
   }
 
   /**
-   * @param {String} path
+   * @param {String} itemId     ID/path of content item to get e.g. `main.title`
    *
    * @return {Mixed}
    */
-  get(path) {
-    return getValue(this.rawContent, path);
+  get(itemId) {
+    return getValue(this.rawContent, itemId);
   }
 
   /**
-   * @param {Object} sections       Top level sections of content
+   * @param {Object} containers       Content of top-level containers
    */
-  setSections(sections) {
-    Object.assign(this.rawContent, sections);
+  set(containers) {
+    Object.assign(this.rawContent, containers);
   }
 
 };
