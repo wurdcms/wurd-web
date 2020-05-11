@@ -1,5 +1,4 @@
-import Cache from './cache';
-import Store from './store';
+import Cache from './cache/memory';
 import Block from './block';
 import { getCacheId } from './utils';
 
@@ -7,12 +6,22 @@ import { getCacheId } from './utils';
 const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
 const API_URL = 'https://api-v3.wurd.io';
 
+const cache = new Cache();
+
 
 class Wurd {
-  constructor(appName, options) {
-    this.cache = new Cache();
-    this.store = new Store();
-    this.content = new Block(this, null);
+  /**
+   * @constructor
+   * @param {String} appName          The Wurd app/project name
+   * @param {Object} [options]
+   * @param {Object} [options.cache]    Optional custom cache; defaults to a simple in-memory cache
+   * @param {Function} [options.fetch]  On Node pass in `require('node-fetch')`
+   */
+  constructor(appName, options = {}) {
+    this.content = new Block(appName, null, {}, options);
+
+    this.cache = options.cache || cache;
+    this.fetch = options.fetch || window.fetch.bind(window);
 
     // Add block shortcut methods to the main Wurd instance
     const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
@@ -66,7 +75,7 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.set(options.rawContent);
+      // this.store.set(options.rawContent);
     }
 
     if (options.blockHelpers) {
@@ -92,7 +101,7 @@ class Wurd {
   }
 
   fetchContent(url) {
-    return fetch(url)
+    return this.fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`Error fetching ${url}: ${res.statusText}`);
 
@@ -113,11 +122,7 @@ class Wurd {
       if (typeof containerIds === 'string') containerIds = containerIds.split(',');
 
       // Merge default and request options
-      console.log(tmpOptions);
-
       const options = this.getOptions(tmpOptions);
-
-      console.log(options);
 
       // Force draft to true if in editMode
       if (options.editMode === true) {
@@ -134,7 +139,7 @@ class Wurd {
       if (options.draft) {
         return this._loadFromServer(containerIds, options)
           .then((content) => {
-            resolve(new Block(this, null));
+            resolve(new Block(app, null, content, options));
           })
           .catch(reject);
       }
@@ -159,8 +164,8 @@ class Wurd {
             });
         })
         .then((allContent) => {
-          this.store.set(allContent);
-          resolve(this.content);
+          // this.store.set(allContent);
+          resolve(new Block(app, null, allContent, options));
         })
         .catch(reject);
 
@@ -169,25 +174,36 @@ class Wurd {
   }
 
   startEditor() {
+
     const { app, lang } = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
     this.draft = true;
 
-    const script = document.createElement('script');
+    // Only run in browser
+    if (typeof document !== 'undefined') {
+      const script = document.createElement('script');
 
-    script.src = WIDGET_URL;
-    script.async = true;
-    script.setAttribute('data-app', app);
+      script.src = WIDGET_URL;
+      script.async = true;
+      script.setAttribute('data-app', app);
 
-    if (lang) {
-      script.setAttribute('data-lang', lang);
+      if (lang) {
+        script.setAttribute('data-lang', lang);
+      }
+
+      document.getElementsByTagName('body')[0].appendChild(script);
     }
-
-    document.getElementsByTagName('body')[0].appendChild(script);
   }
 
+  /**
+   * Makes custom getter functions available on each `Block` of content.
+   * For an example of how these work check the `Block.el()` definition.
+   * The methods can use built-in `Block` methods such as `block.text()` etc.
+   *
+   * @param {Object} helpers
+   */
   setBlockHelpers(helpers) {
     Object.assign(Block.prototype, helpers);
   }

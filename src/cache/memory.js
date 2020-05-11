@@ -1,4 +1,4 @@
-export default class Cache {
+export default class MemoryCache {
 
   constructor() {
     this.items = {};
@@ -7,7 +7,7 @@ export default class Cache {
   /**
    * @param {String} key
    *
-   * @resolves {Mixed}
+   * @resolves {Object|Undefined}
    */
   get(key) {
     return Promise.resolve(this.items[key]);
@@ -15,7 +15,7 @@ export default class Cache {
 
   /**
    * @param {String} key
-   * @param {Mixed} val
+   * @param {Object} val
    *
    * @resolves
    */

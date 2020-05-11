@@ -1,18 +1,25 @@
 import marked from 'marked';
+import getValue from 'get-property-value';
 
 import { replaceVars } from './utils';
 
 
 export default class Block {
 
-  constructor(wurd, path) {
-    this.wurd = wurd;
+  constructor(app, path, content, options = {}) {
+    this.app = app;
     this.path = path;
+    this.content = content;
+
+    this.lang = options.lang;
+    this.draft = options.draft;
+    this.editMode = options.editMode;
+
 
     // Private shortcut to the main content getter
     // TODO: Make a proper private variable
     // See http://voidcanvas.com/es6-private-variables/ - but could require Babel Polyfill to be included
-    this._get = wurd.store.get.bind(wurd.store);
+    // this._get = wurd.store.get.bind(wurd.store);
 
     // Bind methods to the instance to enable 'this' to be available
     // to own methods and added helper methods;
@@ -23,6 +30,8 @@ export default class Block {
     methodNames.forEach(name => {
       this[name] = this[name].bind(this);
     });
+
+    // console.log('new block', path, options, content);
   }
 
   /**
@@ -47,16 +56,17 @@ export default class Block {
    * @return {Mixed}
    */
   get(path) {
-    const result = this._get(this.id(path));
+    // const result = this._get(this.id(path));
+    const result = getValue(this.content, path);
 
     // If an item is missing, check that the section has been loaded
-    if (typeof result === 'undefined' && this.wurd.draft) {
+    /* if (typeof result === 'undefined' && this.draft) {
       const section = path.split('.')[0];
 
       if (!this._get(section)) {
         console.warn(`Tried to access unloaded section: ${section}`);
       }
-    }
+    } */
 
     return result;
   }
@@ -75,13 +85,13 @@ export default class Block {
     let text = this.get(path);
 
     if (typeof text === 'undefined') {
-      return (this.wurd.draft) ? `[${path}]` : '';
+      return (this.draft) ? `[${path}]` : '';
     }
 
     if (typeof text !== 'string') {
       console.warn(`Tried to get object as string: ${path}`);
 
-      return (this.wurd.draft) ? `[${path}]` : '';
+      return (this.draft) ? `[${path}]` : '';
     }
 
     if (vars) {
@@ -142,7 +152,11 @@ export default class Block {
   block(path, fn) {
     const blockPath = this.id(path);
 
-    const childBlock = new Block(this.wurd, blockPath);
+    const childBlock = new Block(this.app, blockPath, this.get(path), {
+      lang: this.lang,
+      draft: this.draft,
+      editMode: this.editMode,
+    });
 
     if (typeof fn === 'function') {
       return fn.call(undefined, childBlock);
@@ -172,7 +186,7 @@ export default class Block {
     const text = options.markdown ? this.markdown(path, vars) : this.text(path, vars);
     const editor = (vars || options.markdown) ? 'data-wurd-md' : 'data-wurd';
 
-    if (this.wurd.draft) {
+    if (this.draft) {
       let type = options.type || 'span';
 
       if (options.markdown) type = 'div';
@@ -184,27 +198,16 @@ export default class Block {
   }
 
   /**
-   * Returns the block helpers, bound to the block instance.
-   * This is useful if using object destructuring for shortcuts,
-   * for example `const {text, el} = block.bound()`
+   * Returns the HTML script tag which starts the Wurd editor
    *
-   * @return {Object}
+   * @return {String}
    */
-  /*
-  helpers(path) {
-    const block = path ? this.block(path) : this;
+  includeEditor() {
+    if (!this.editMode) return '';
 
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(block));
+    const { app, lang } = this;
 
-    const boundMethods = methodNames.reduce((memo, name) => {
-      if (name === 'constructor') return memo;
-
-      memo[name] = block[name].bind(block);
-      return memo;
-    }, {});
-
-    return boundMethods;
+    return `<script src="https://edit-v3.wurd.io/widget.js" data-app="${app}" data-lang="${lang || ''}"></script>`;
   }
-  */
 
 };
