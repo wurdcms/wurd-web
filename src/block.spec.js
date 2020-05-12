@@ -15,7 +15,7 @@ describe('Block', function() {
   });
 
 
-  describe('#id()', function() {
+  /* describe('#id()', function() {
     describe('with no path argument', function() {
       it('returns the block path', function() {
         const block = new Block(new Wurd('foo'), 'sectionName');
@@ -184,7 +184,7 @@ describe('Block', function() {
         same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
       });
     });
-  });
+  }); */
 
 
   describe('#markdown()', function() {

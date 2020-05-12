@@ -1,6 +1,8 @@
+import marked from 'marked';
+
 import Cache from './cache/memory';
-import Block from './block';
-import { getCacheId } from './utils';
+import Store from './store';
+import { getCacheId, replaceVars } from './utils';
 
 
 const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
@@ -12,12 +14,13 @@ const cache = new Cache();
 class Wurd {
   /**
    * @constructor
-   * @param {String} appName          The Wurd app/project name
+   * @param {String} appName            The Wurd app/project name
    * @param {Object} [options]
    * @param {Object} [options.cache]    Optional custom cache; defaults to a simple in-memory cache
    * @param {Function} [options.fetch]  On Node pass in `require('node-fetch')`
+   * @param {Object} [options.content]  Initial content
    */
-  constructor(appName, options = {}) {
+  /* constructor(appName, options = {}) {
     this.content = new Block(appName, null, {}, options);
 
     this.cache = options.cache || cache;
@@ -31,26 +34,36 @@ class Wurd {
     });
 
     this.connect(appName, options);
+  } */
+
+  constructor(app, options) {
+    this.connect(app, options);
   }
 
   /**
    * Sets up the default connection/instance
    *
-   * @param {String} appName
+   * @param {String} app                          The Wurd app/project name
    * @param {Object} [options]
    * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
-   * @param {Object} [options.rawContent]         Content to populate the store with
+   * @param {Function} [options.fetch]            On Node pass in `require('node-fetch')`
+   * @param {Object} [options.cache]              Optional custom cache; defaults to a simple in-memory cache
+   * @param {Object} [options.rawContent]         Initial content
    */
-  connect(appName, options = {}) {
-    this.app = appName;
+  connect(app, options = {}) {
+    this.app = app;
+    this.store = new Store(options.rawContent);
+
+    this.cache = options.cache || cache;
+    this.fetch = options.fetch || (typeof window !== 'undefined' && window.fetch.bind(window));
 
     this.draft = false;
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'log'].forEach(name => {
+    ['path', 'draft', 'lang', 'log'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;
@@ -74,10 +87,6 @@ class Wurd {
         break;
     }
 
-    if (options.rawContent) {
-      // this.store.set(options.rawContent);
-    }
-
     if (options.blockHelpers) {
       this.setBlockHelpers(options.blockHelpers);
     }
@@ -93,6 +102,7 @@ class Wurd {
    */
   getOptions(overrideOptions) {
     return Object.assign({}, {
+      path: this.path,
       lang: this.lang,
       draft: this.draft,
       editMode: this.editMode,
@@ -139,7 +149,9 @@ class Wurd {
       if (options.draft) {
         return this._loadFromServer(containerIds, options)
           .then((content) => {
-            resolve(new Block(app, null, content, options));
+            // resolve(new Block(app, null, content, options));
+            this.store.set(content);
+            resolve(this);
           })
           .catch(reject);
       }
@@ -164,8 +176,9 @@ class Wurd {
             });
         })
         .then((allContent) => {
-          // this.store.set(allContent);
-          resolve(new Block(app, null, allContent, options));
+          this.store.set(allContent);
+          // resolve(new Block(app, null, allContent, options));
+          resolve(this);
         })
         .catch(reject);
 
@@ -205,7 +218,7 @@ class Wurd {
    * @param {Object} helpers
    */
   setBlockHelpers(helpers) {
-    Object.assign(Block.prototype, helpers);
+    Object.assign(this.prototype, helpers);
   }
 
   /**
@@ -261,6 +274,189 @@ class Wurd {
     log && console.info('from server: ', containerIds);
 
     return this.fetchContent(url);
+  }
+
+  /**
+   * Gets the ID of a child content item by path (e.g. id('item') returns `block.item`)
+   *
+   * @param {String} path       Item path e.g. `blockId.itemId`
+   *
+   * @return {String}
+   */
+  id(path) {
+    if (!path) return this.path || null;
+
+    return this.path ? [this.path, path].join('.') : path;
+  }
+
+  /**
+   * Gets a content item by path (e.g. `section.item`).
+   * Will return both text and/or objects, depending on the contents of the item
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   *
+   * @return {Mixed}
+   */
+  get(path) {
+    const itemId = this.id(path);
+    // const result = getValue(this.content, itemId);
+    const result = this.store.get(itemId);
+
+    // If an item is missing, check that the parent block has been loaded
+    if (typeof result === 'undefined' && this.draft) {
+      const blockId = itemId.split('.')[0];
+
+      // if (!getValue(this.content, blockId)) {
+      if (!this.store.get(blockId)) {
+        console.warn(`Tried to access unloaded section: ${blockId}`);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Gets text content of an item by path (e.g. `section.item`).
+   * If the item is not a string, e.g. you have passed the path of an object,
+   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   * @param {Object} [vars]     Variables to replace in the text
+   *
+   * @return {Mixed}
+   */
+  text(path, vars) {
+    let text = this.get(path);
+
+    if (typeof text === 'undefined') {
+      return (this.draft) ? `[${path}]` : '';
+    }
+
+    if (typeof text !== 'string') {
+      console.warn(`Tried to get object as string: ${path}`);
+
+      return (this.draft) ? `[${path}]` : '';
+    }
+
+    if (vars) {
+      text = replaceVars(text, vars);
+    }
+
+    return text;
+  }
+
+  /**
+   * Gets HTML from Markdown content of an item by path (e.g. `section.item`).
+   * If the item is not a string, e.g. you have passed the path of an object,
+   * an empty string will be returned, unless in draft mode in which case a warning will be returned.
+   *
+   * @param {String} path       Item path e.g. `section.item`
+   * @param {Object} [vars]     Variables to replace in the text
+   *
+   * @return {Mixed}
+   */
+  markdown(path, vars) {
+    return marked(this.text(path, vars));
+  }
+
+  /**
+   * Iterates over a collection / list object with the given callback.
+   *
+   * @param {String} path
+   * @param {Function} fn     Callback function with signature ({Function} itemBlock, {Number} index)
+   */
+  map(path, fn) {
+    const listContent = this.get(path) || { [Date.now()]: {} };
+
+    let index = 0;
+
+    const keys = Object.keys(listContent).sort();
+
+    return keys.map(key => {
+      const currentIndex = index;
+
+      index++;
+
+      const itemPath = [path, key].join('.');
+      const itemBlock = this.block(itemPath);
+
+      return fn.call(undefined, itemBlock, currentIndex);
+    });
+  }
+
+  /**
+   * Creates a new Block scoped to the child content.
+   * Optionally runs a callback with the block as the argument
+   *
+   * @param {String} path
+   * @param {Function} [fn]     Optional callback that receives the child block object
+   *
+   * @return {Block}
+   */
+  block(path, fn) {
+    const fullPath = this.id(path);
+
+    /* const childBlock = new Block(this.app, fullPath, this.get(path), {
+      lang: this.lang,
+      draft: this.draft,
+      editMode: this.editMode,
+    }); */
+
+    const childBlock = new Wurd(this.app, this.getOptions({ path: fullPath }));
+
+    childBlock.store = this.store;
+    childBlock.cache = this.cache;
+
+    if (typeof fn === 'function') {
+      return fn.call(undefined, childBlock);
+    }
+
+    return childBlock;
+  }
+
+  /**
+   * Returns an HTML string for an editable element.
+   *
+   * This is a shortcut for writing out the HTML tag
+   * with the wurd editor attributes and the text content.
+   *
+   * Use this or create a similar helper to avoid having to type out the item paths twice.
+   *
+   * @param {String} path
+   * @param {Object} [vars]               Optional variables to replace in the text
+   * @param {Object} [options]
+   * @param {Boolean} [options.markdown]  Parses text as markdown
+   * @param {String} [options.type]       HTML node type, defaults to 'span', or 'div' for markdown content
+   *
+   * @return {String}
+   */
+  el(path, vars, options = {}) {
+    const id = this.id(path);
+    const text = options.markdown ? this.markdown(path, vars) : this.text(path, vars);
+    const editor = (vars || options.markdown) ? 'data-wurd-md' : 'data-wurd';
+
+    if (this.draft) {
+      let type = options.type || 'span';
+
+      if (options.markdown) type = 'div';
+
+      return `<${type} ${editor}="${id}">${text}</${type}>`;
+    }
+
+    return text;
+  }
+
+  /**
+   * Returns the HTML script tag which starts the Wurd editor
+   *
+   * @return {String}
+   */
+  includeEditor() {
+    if (!this.editMode) return '';
+
+    const { app, lang } = this;
+
+    return `<script src="https://edit-v3.wurd.io/widget.js" data-app="${app}" data-lang="${lang || ''}"></script>`;
   }
 }
 

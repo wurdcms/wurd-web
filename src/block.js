@@ -4,6 +4,7 @@ import getValue from 'get-property-value';
 import { replaceVars } from './utils';
 
 
+
 export default class Block {
 
   constructor(app, path, content, options = {}) {
