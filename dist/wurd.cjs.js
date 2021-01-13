@@ -1,9 +1,12 @@
 'use strict';
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+var getValue = require('get-property-value');
+var marked = require('marked');
 
-var getValue = _interopDefault(require('get-property-value'));
-var marked = _interopDefault(require('marked'));
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var getValue__default = /*#__PURE__*/_interopDefaultLegacy(getValue);
+var marked__default = /*#__PURE__*/_interopDefaultLegacy(marked);
 
 /**
  * @param {Object} data
@@ -56,7 +59,7 @@ class Store {
    * @return {Mixed}
    */
   get(path) {
-    return getValue(this.rawContent, path);
+    return getValue__default['default'](this.rawContent, path);
   }
 
   /**
@@ -163,11 +166,20 @@ class Block {
    *
    * @param {String} path       Item path e.g. `section.item`
    * @param {Object} [vars]     Variables to replace in the text
+   * @param {Boolean} [opts.inline]
    *
    * @return {Mixed}
    */
-  markdown(path, vars) {
-    return marked(this.text(path, vars));
+  markdown(path, vars, opts) {
+    const md = marked__default['default'](this.text(path, vars)); // if we switch to markdown-it, use .renderInline() method
+
+    if (opts?.inline) {
+      const text = md.trim();
+
+      return text.startsWith('<p>') && text.endsWith('</p>') ? text.slice(3, -4) : text;
+    }
+
+    return md;
   }
 
   /**

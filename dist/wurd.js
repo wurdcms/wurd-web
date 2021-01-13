@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = global || self, global.wurd = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory());
 }(this, (function () { 'use strict';
 
   function _typeof(obj) {
@@ -122,6 +122,13 @@
     return false;
   }
 
+  /*
+  eslint
+  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
+  padded-blocks: ["error", {"classes": "always"}]
+  max-len: ["error", 80]
+  */
+
   var getPropertyValue_1 = getPropertyValue;
 
   function getPropertyValue(obj, path) {
@@ -179,8 +186,9 @@
     return Store;
   }();
 
-  function createCommonjsModule(fn, module) {
-  	return module = { exports: {} }, fn(module, module.exports), module.exports;
+  function createCommonjsModule(fn) {
+    var module = { exports: {} };
+  	return fn(module, module.exports), module.exports;
   }
 
   var defaults = createCommonjsModule(function (module) {
@@ -215,9 +223,6 @@
       changeDefaults: changeDefaults
     };
   });
-  var defaults_1 = defaults.defaults;
-  var defaults_2 = defaults.getDefaults;
-  var defaults_3 = defaults.changeDefaults;
 
   /**
    * Helpers
@@ -500,7 +505,7 @@
   var block = {
     newline: /^\n+/,
     code: /^( {4}[^\n]+\n*)+/,
-    fences: /^ {0,3}(`{3,}|~{3,})([^`~\n]*)\n(?:|([\s\S]*?)\n)(?: {0,3}\1[~`]* *(?:\n+|$)|$)/,
+    fences: /^ {0,3}(`{3,}(?=[^`\n]*\n)|~{3,})([^\n]*)\n(?:|([\s\S]*?)\n)(?: {0,3}\1[~`]* *(?:\n+|$)|$)/,
     hr: /^ {0,3}((?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})(?:\n+|$)/,
     heading: /^ {0,3}(#{1,6}) +([^\n]*?)(?: +#+)? *(?:\n+|$)/,
     blockquote: /^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/,
@@ -534,8 +539,8 @@
   block._tag = 'address|article|aside|base|basefont|blockquote|body|caption' + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption' + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe' + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option' + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr' + '|track|ul';
   block._comment = /<!--(?!-?>)[\s\S]*?-->/;
   block.html = edit$1(block.html, 'i').replace('comment', block._comment).replace('tag', block._tag).replace('attribute', / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
-  block.paragraph = edit$1(block._paragraph).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} +').replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
-  .replace('blockquote', ' {0,3}>').replace('fences', ' {0,3}(?:`{3,}|~{3,})[^`\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  block.paragraph = edit$1(block._paragraph).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
+  .replace('blockquote', ' {0,3}>').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
   .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)').replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
   .getRegex();
   block.blockquote = edit$1(block.blockquote).replace('paragraph', block.paragraph).getRegex();
@@ -549,9 +554,21 @@
    */
 
   block.gfm = merge$1({}, block.normal, {
-    nptable: /^ *([^|\n ].*\|.*)\n *([-:]+ *\|[-| :]*)(?:\n((?:.*[^>\n ].*(?:\n|$))*)\n*|$)/,
-    table: /^ *\|(.+)\n *\|?( *[-:]+[-| :]*)(?:\n((?: *[^>\n ].*(?:\n|$))*)\n*|$)/
+    nptable: '^ *([^|\\n ].*\\|.*)\\n' // Header
+    + ' *([-:]+ *\\|[-| :]*)' // Align
+    + '(?:\\n((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)',
+    // Cells
+    table: '^ *\\|(.+)\\n' // Header
+    + ' *\\|?( *[-:]+[-| :]*)' // Align
+    + '(?:\\n *((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)' // Cells
+
   });
+  block.gfm.nptable = edit$1(block.gfm.nptable).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('blockquote', ' {0,3}>').replace('code', ' {4}[^\\n]').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)').replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+  .getRegex();
+  block.gfm.table = edit$1(block.gfm.table).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('blockquote', ' {0,3}>').replace('code', ' {4}[^\\n]').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)').replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+  .getRegex();
   /**
    * Pedantic grammar (original John Gruber's loose markdown specification)
    */
@@ -1209,7 +1226,9 @@
     _createClass(Slugger, [{
       key: "slug",
       value: function slug(value) {
-        var slug = value.toLowerCase().trim().replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '').replace(/\s/g, '-');
+        var slug = value.toLowerCase().trim() // remove html tags
+        .replace(/<[!\/a-z].*?>/ig, '') // remove unwanted chars
+        .replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '').replace(/\s/g, '-');
 
         if (this.seen.hasOwnProperty(slug)) {
           var originalSlug = slug;
@@ -1304,7 +1323,7 @@
             }
 
             src = src.substring(cap[0].length);
-            out += this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$3(cap[0]) : cap[0];
+            out += this.renderer.html(this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$3(cap[0]) : cap[0]);
             continue;
           } // link
 
@@ -1567,6 +1586,11 @@
     }, {
       key: "del",
       value: function del(text) {
+        return text;
+      }
+    }, {
+      key: "html",
+      value: function html(text) {
         return text;
       }
     }, {
@@ -2075,14 +2099,22 @@
        *
        * @param {String} path       Item path e.g. `section.item`
        * @param {Object} [vars]     Variables to replace in the text
+       * @param {Boolean} [opts.inline]
        *
        * @return {Mixed}
        */
 
     }, {
       key: "markdown",
-      value: function markdown(path, vars) {
-        return marked_1(this.text(path, vars));
+      value: function markdown(path, vars, opts) {
+        var md = marked_1(this.text(path, vars)); // if we switch to markdown-it, use .renderInline() method
+
+        if (opts !== null && opts !== void 0 && opts.inline) {
+          var text = md.trim();
+          return text.startsWith('<p>') && text.endsWith('</p>') ? text.slice(3, -4) : text;
+        }
+
+        return md;
       }
       /**
        * Iterates over a collection / list object with the given callback.

@@ -98,11 +98,20 @@ export default class Block {
    *
    * @param {String} path       Item path e.g. `section.item`
    * @param {Object} [vars]     Variables to replace in the text
+   * @param {Boolean} [opts.inline]
    *
    * @return {Mixed}
    */
-  markdown(path, vars) {
-    return marked(this.text(path, vars));
+  markdown(path, vars, opts) {
+    const md = marked(this.text(path, vars)); // if we switch to markdown-it, use .renderInline() method
+
+    if (opts?.inline) {
+      const text = md.trim();
+
+      return text.startsWith('<p>') && text.endsWith('</p>') ? text.slice(3, -4) : text;
+    }
+
+    return md;
   }
 
   /**
