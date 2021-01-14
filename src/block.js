@@ -103,15 +103,11 @@ export default class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
-    const md = marked(this.text(path, vars)); // if we switch to markdown-it, use .renderInline() method
-
-    if (opts?.inline) {
-      const text = md.trim();
-
-      return text.startsWith('<p>') && text.endsWith('</p>') ? text.slice(3, -4) : text;
+    if (opts?.inline && marked.parseInline) {
+      return marked.parseInline(this.text(path, vars));
     }
 
-    return md;
+    return marked(this.text(path, vars));
   }
 
   /**
