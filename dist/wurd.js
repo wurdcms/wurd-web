@@ -57,127 +57,47 @@
     return obj;
   }
 
-  /**
-   * @param {Object} data
-   *
-   * @return {String}
-   */
-  var encodeQueryString = function encodeQueryString(data) {
-    var parts = Object.keys(data).map(function (key) {
-      var value = data[key];
-      return encodeURIComponent(key) + '=' + encodeURIComponent(value);
-    });
-    return parts.join('&');
-  };
-  /**
-   * Replaces {{mustache}} style placeholders in text with variables
-   *
-   * @param {String} text
-   * @param {Object} vars
-   *
-   * @return {String}
-   */
-
-  var replaceVars = function replaceVars(text) {
-    var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    if (typeof text !== 'string') return text;
-    Object.keys(vars).forEach(function (key) {
-      var val = vars[key];
-      text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
-    });
-    return text;
-  };
-
-  /*
-  eslint
-  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
-  padded-blocks: ["error", {"classes": "always"}]
-  max-len: ["error", 80]
-  */
-  var is_object = isObject;
-
-  function isObject(val) {
-    return !(val == null || _typeof(val) !== 'object' || Array.isArray(val));
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
   }
 
-  /*
-  eslint
-  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
-  padded-blocks: ["error", {"classes": "always"}]
-  max-len: ["error", 80]
-  */
-
-  var array_some = some;
-
-  function some(arr, fn) {
-    var len = arr.length;
-    var i = -1;
-
-    while (++i < len) {
-      if (fn(arr[i], i, arr)) {
-        return true;
-      }
-    }
-
-    return false;
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
   }
 
-  var getPropertyValue_1 = getPropertyValue;
-
-  function getPropertyValue(obj, path) {
-    if (!is_object(obj) || typeof path !== 'string') {
-      return obj;
+  function _iterableToArrayLimit(arr, i) {
+    if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
+      return;
     }
 
-    var clone = obj;
-    array_some(path.split('.'), procPath);
-    return clone;
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
-    function procPath(p) {
-      clone = clone[p];
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
 
-      if (!clone) {
-        return true;
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
       }
     }
+
+    return _arr;
   }
 
-  var Store = /*#__PURE__*/function () {
-    /**
-     * @param {Object} rawContent       Initial content
-     */
-    function Store() {
-      var rawContent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-      _classCallCheck(this, Store);
-
-      this.rawContent = rawContent;
-    }
-    /**
-     * @param {String} path
-     *
-     * @return {Mixed}
-     */
-
-
-    _createClass(Store, [{
-      key: "get",
-      value: function get(path) {
-        return getPropertyValue_1(this.rawContent, path);
-      }
-      /**
-       * @param {Object} sections       Top level sections of content
-       */
-
-    }, {
-      key: "setSections",
-      value: function setSections(sections) {
-        Object.assign(this.rawContent, sections);
-      }
-    }]);
-
-    return Store;
-  }();
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
 
   function createCommonjsModule(fn, module) {
   	return module = { exports: {} }, fn(module, module.exports), module.exports;
@@ -1976,40 +1896,449 @@
   marked.parse = marked;
   var marked_1 = marked;
 
-  var Block = /*#__PURE__*/function () {
-    function Block(wurd, path) {
-      var _this = this;
+  var MemoryCache = /*#__PURE__*/function () {
+    function MemoryCache() {
+      _classCallCheck(this, MemoryCache);
 
-      _classCallCheck(this, Block);
-
-      this.wurd = wurd;
-      this.path = path; // Private shortcut to the main content getter
-      // TODO: Make a proper private variable
-      // See http://voidcanvas.com/es6-private-variables/ - but could require Babel Polyfill to be included
-
-      this._get = wurd.store.get.bind(wurd.store); // Bind methods to the instance to enable 'this' to be available
-      // to own methods and added helper methods;
-      // This also allows object destructuring, for example:
-      // `const {text} = wurd.block('home')`
-
-      var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-      methodNames.forEach(function (name) {
-        _this[name] = _this[name].bind(_this);
-      });
+      this.items = {};
     }
     /**
-     * Gets the ID of a child content item by path (e.g. id('item') returns `block.item`)
+     * @param {String} key
      *
-     * @param {String} path       Item path e.g. `section.item`
-     *
-     * @return {String}
+     * @resolves {Object|Undefined}
      */
 
 
-    _createClass(Block, [{
+    _createClass(MemoryCache, [{
+      key: "get",
+      value: function get(key) {
+        return Promise.resolve(this.items[key]);
+      }
+      /**
+       * @param {String} key
+       * @param {Object} val
+       *
+       * @resolves
+       */
+
+    }, {
+      key: "set",
+      value: function set(key, val) {
+        this.items[key] = val;
+        return Promise.resolve();
+      }
+    }]);
+
+    return MemoryCache;
+  }();
+
+  /*
+  eslint
+  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
+  padded-blocks: ["error", {"classes": "always"}]
+  max-len: ["error", 80]
+  */
+  var is_object = isObject;
+
+  function isObject(val) {
+    return !(val == null || _typeof(val) !== 'object' || Array.isArray(val));
+  }
+
+  /*
+  eslint
+  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
+  padded-blocks: ["error", {"classes": "always"}]
+  max-len: ["error", 80]
+  */
+
+  var array_some = some;
+
+  function some(arr, fn) {
+    var len = arr.length;
+    var i = -1;
+
+    while (++i < len) {
+      if (fn(arr[i], i, arr)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  var getPropertyValue_1 = getPropertyValue;
+
+  function getPropertyValue(obj, path) {
+    if (!is_object(obj) || typeof path !== 'string') {
+      return obj;
+    }
+
+    var clone = obj;
+    array_some(path.split('.'), procPath);
+    return clone;
+
+    function procPath(p) {
+      clone = clone[p];
+
+      if (!clone) {
+        return true;
+      }
+    }
+  }
+
+  var Store = /*#__PURE__*/function () {
+    /**
+     * @param {Object} rawContent       Initial content
+     */
+    function Store() {
+      var rawContent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      _classCallCheck(this, Store);
+
+      this.rawContent = rawContent;
+    }
+    /**
+     * @param {String} itemId     ID/path of content item to get e.g. `main.title`
+     *
+     * @return {Mixed}
+     */
+
+
+    _createClass(Store, [{
+      key: "get",
+      value: function get(itemId) {
+        return getPropertyValue_1(this.rawContent, itemId);
+      }
+      /**
+       * @param {Object} containers       Content of top-level containers
+       */
+
+    }, {
+      key: "set",
+      value: function set(containers) {
+        Object.assign(this.rawContent, containers);
+      }
+    }]);
+
+    return Store;
+  }();
+
+  /**
+   * Replaces {{mustache}} style placeholders in text with variables
+   *
+   * @param {String} text
+   * @param {Object} vars
+   *
+   * @return {String}
+   */
+  function replaceVars(text) {
+    var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    if (typeof text !== 'string') return text;
+    Object.entries(vars).forEach(function (_ref) {
+      var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0],
+          val = _ref2[1];
+
+      text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
+    });
+    return text;
+  }
+  /**
+   * Returns the key for caching a block of content, including the language
+   *
+   * @param {String} containerId
+   * @param {Object} [options]
+   *
+   * @return {String} cacheId
+   */
+
+  function getCacheId(containerId) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var lang = options.lang || '';
+    return "".concat(lang, "/").concat(containerId);
+  }
+
+  var WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
+  var API_URL = 'https://api-v3.wurd.io';
+  var cache = new MemoryCache();
+
+  var Wurd = /*#__PURE__*/function () {
+    /**
+     * @constructor
+     * @param {String} appName            The Wurd app/project name
+     * @param {Object} [options]
+     * @param {Object} [options.cache]    Optional custom cache; defaults to a simple in-memory cache
+     * @param {Function} [options.fetch]  On Node pass in `require('node-fetch')`
+     * @param {Object} [options.content]  Initial content
+     */
+
+    /* constructor(appName, options = {}) {
+      this.content = new Block(appName, null, {}, options);
+       this.cache = options.cache || cache;
+      this.fetch = options.fetch || window.fetch.bind(window);
+       // Add block shortcut methods to the main Wurd instance
+      const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
+       methodNames.forEach(name => {
+        this[name] = this.content[name].bind(this.content);
+      });
+       this.connect(appName, options);
+    } */
+    function Wurd(app, options) {
+      _classCallCheck(this, Wurd);
+
+      this.connect(app, options);
+    }
+    /**
+     * Sets up the default connection/instance
+     *
+     * @param {String} app                          The Wurd app/project name
+     * @param {Object} [options]
+     * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
+     * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
+     * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
+     * @param {Function} [options.fetch]            On Node pass in `require('node-fetch')`
+     * @param {Object} [options.cache]              Optional custom cache; defaults to a simple in-memory cache
+     * @param {Object} [options.rawContent]         Initial content
+     */
+
+
+    _createClass(Wurd, [{
+      key: "connect",
+      value: function connect(app) {
+        var _this = this;
+
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        this.app = app;
+        this.store = new Store(options.rawContent);
+        this.cache = options.cache || cache;
+        this.fetch = options.fetch || typeof window !== 'undefined' && window.fetch.bind(window);
+        this.draft = false;
+        this.editMode = false; // Set allowed options
+
+        ['path', 'draft', 'lang', 'log'].forEach(function (name) {
+          var val = options[name];
+          if (typeof val !== 'undefined') _this[name] = val;
+        }); // Activate edit mode if required
+
+        switch (options.editMode) {
+          // Edit mode always on
+          case true:
+            this.startEditor();
+            break;
+          // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
+
+          case 'querystring':
+            if (/[?&]edit(&|$)/.test(location.search)) {
+              this.startEditor();
+            }
+
+            break;
+        }
+
+        if (options.blockHelpers) {
+          this.setBlockHelpers(options.blockHelpers);
+        }
+
+        return this;
+      }
+      /**
+       * Returns options object with overrides applied
+       *
+       * @param {Object} overrideOptions
+       * @return {Object}
+       */
+
+    }, {
+      key: "getOptions",
+      value: function getOptions(overrideOptions) {
+        return Object.assign({}, {
+          path: this.path,
+          lang: this.lang,
+          draft: this.draft,
+          editMode: this.editMode,
+          log: this.log
+        }, overrideOptions);
+      }
+    }, {
+      key: "fetchContent",
+      value: function fetchContent(url) {
+        return this.fetch(url).then(function (res) {
+          if (!res.ok) throw new Error("Error fetching ".concat(url, ": ").concat(res.statusText));
+          return res.json();
+        });
+      }
+      /**
+       * Loads content containers so that items are ready to be accessed with #get(id)
+       *
+       * @param {String|String[]} containerIds    Top-level container IDs e.g. `['main','home']`
+       * @param {Object} [options]                Options that override the defaults provided in constructor/connect
+       * @resolves {Block}
+       */
+
+    }, {
+      key: "load",
+      value: function load(containerIds) {
+        var _this2 = this;
+
+        var tmpOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        return new Promise(function (resolve, reject) {
+          // Normalise ids to array
+          if (typeof containerIds === 'string') containerIds = containerIds.split(','); // Merge default and request options
+
+          var options = _this2.getOptions(tmpOptions); // Force draft to true if in editMode
+
+
+          if (options.editMode === true) {
+            options.draft = true;
+          }
+
+          var app = _this2.app;
+          if (!app) return reject(new Error('Use `wurd.connect(appName)` before `wurd.load()`'));
+          options.log && console.log('loading: ', containerIds, options); // If in draft, skip cache
+
+          if (options.draft) {
+            return _this2._loadFromServer(containerIds, options).then(function (content) {
+              // resolve(new Block(app, null, content, options));
+              _this2.store.set(content);
+
+              resolve(_this2);
+            })["catch"](reject);
+          } // Otherwise not in draft mode; check for cached versions
+
+
+          _this2._loadFromCache(containerIds, options).then(function (cachedContent) {
+            var uncachedIds = Object.keys(cachedContent).filter(function (id) {
+              return cachedContent[id] === undefined;
+            }); // If all content was cached, return it without a server trip
+
+            if (!uncachedIds.length) {
+              return cachedContent;
+            }
+
+            return _this2._loadFromServer(uncachedIds, options).then(function (fetchedContent) {
+              _this2._saveToCache(fetchedContent, options);
+
+              return Object.assign(cachedContent, fetchedContent);
+            });
+          }).then(function (allContent) {
+            _this2.store.set(allContent); // resolve(new Block(app, null, allContent, options));
+
+
+            resolve(_this2);
+          })["catch"](reject);
+
+          return null;
+        });
+      }
+    }, {
+      key: "startEditor",
+      value: function startEditor() {
+        var app = this.app,
+            lang = this.lang; // Draft mode is always on if in edit mode
+
+        this.editMode = true;
+        this.draft = true; // Only run in browser
+
+        if (typeof document !== 'undefined') {
+          var script = document.createElement('script');
+          script.src = WIDGET_URL;
+          script.async = true;
+          script.setAttribute('data-app', app);
+
+          if (lang) {
+            script.setAttribute('data-lang', lang);
+          }
+
+          document.getElementsByTagName('body')[0].appendChild(script);
+        }
+      }
+      /**
+       * Makes custom getter functions available on each `Block` of content.
+       * For an example of how these work check the `Block.el()` definition.
+       * The methods can use built-in `Block` methods such as `block.text()` etc.
+       *
+       * @param {Object} helpers
+       */
+
+    }, {
+      key: "setBlockHelpers",
+      value: function setBlockHelpers(helpers) {
+        Object.assign(this.prototype, helpers);
+      }
+      /**
+       * @param {Object} allContent    Content keyed by containerId (i.e. the response from the Wurd content API)
+       *
+       * @return {Promise}
+       */
+
+    }, {
+      key: "_saveToCache",
+      value: function _saveToCache(allContent) {
+        var _this3 = this;
+
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var promises = Object.keys(allContent).map(function (containerId) {
+          var container = allContent[containerId];
+          return _this3.cache.set(getCacheId(containerId, options), container);
+        });
+        return Promise.all(promises);
+      }
+      /**
+       * @param {String[]} containerIds   Top level containerIds to load content for
+       *
+       * @resolves {Object} content
+       */
+
+    }, {
+      key: "_loadFromCache",
+      value: function _loadFromCache(containerIds) {
+        var _this4 = this;
+
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var allContent = {};
+        var promises = containerIds.map(function (containerId) {
+          return _this4.cache.get(getCacheId(containerId, options)).then(function (container) {
+            allContent[containerId] = container;
+          });
+        });
+        return Promise.all(promises).then(function () {
+          return allContent;
+        });
+      }
+      /**
+       * @param {String[]} containerIds   Top level containerIds to load content for
+       * @param {Object} [options]
+       *
+       * @resolves {Object} content
+       */
+
+    }, {
+      key: "_loadFromServer",
+      value: function _loadFromServer(containerIds, _ref) {
+        var draft = _ref.draft,
+            lang = _ref.lang,
+            log = _ref.log;
+        var app = this.app;
+        var containers = containerIds.join(',');
+        var params = {};
+        if (draft) params.draft = 1;
+        if (lang) params.lang = lang;
+        var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(containers, "?").concat(new URLSearchParams(params));
+        log && console.info('from server: ', containerIds);
+        return this.fetchContent(url);
+      }
+      /**
+       * Gets the ID of a child content item by path (e.g. id('item') returns `block.item`)
+       *
+       * @param {String} path       Item path e.g. `blockId.itemId`
+       *
+       * @return {String}
+       */
+
+    }, {
       key: "id",
       value: function id(path) {
-        if (!path) return this.path;
+        if (!path) return this.path || null;
         return this.path ? [this.path, path].join('.') : path;
       }
       /**
@@ -2024,14 +2353,15 @@
     }, {
       key: "get",
       value: function get(path) {
-        var result = this._get(this.id(path)); // If an item is missing, check that the section has been loaded
+        var itemId = this.id(path); // const result = getValue(this.content, itemId);
 
+        var result = this.store.get(itemId); // If an item is missing, check that the parent block has been loaded
 
-        if (typeof result === 'undefined' && this.wurd.draft) {
-          var section = path.split('.')[0];
+        if (typeof result === 'undefined' && this.draft) {
+          var blockId = itemId.split('.')[0]; // if (!getValue(this.content, blockId)) {
 
-          if (!this._get(section)) {
-            console.warn("Tried to access unloaded section: ".concat(section));
+          if (!this.store.get(blockId)) {
+            console.warn("Tried to access unloaded section: ".concat(blockId));
           }
         }
 
@@ -2054,12 +2384,12 @@
         var text = this.get(path);
 
         if (typeof text === 'undefined') {
-          return this.wurd.draft ? "[".concat(path, "]") : '';
+          return this.draft ? "[".concat(path, "]") : '';
         }
 
         if (typeof text !== 'string') {
           console.warn("Tried to get object as string: ".concat(path));
-          return this.wurd.draft ? "[".concat(path, "]") : '';
+          return this.draft ? "[".concat(path, "]") : '';
         }
 
         if (vars) {
@@ -2094,7 +2424,7 @@
     }, {
       key: "map",
       value: function map(path, fn) {
-        var _this2 = this;
+        var _this5 = this;
 
         var listContent = this.get(path) || _defineProperty({}, Date.now(), {});
 
@@ -2105,7 +2435,7 @@
           index++;
           var itemPath = [path, key].join('.');
 
-          var itemBlock = _this2.block(itemPath);
+          var itemBlock = _this5.block(itemPath);
 
           return fn.call(undefined, itemBlock, currentIndex);
         });
@@ -2123,8 +2453,18 @@
     }, {
       key: "block",
       value: function block(path, fn) {
-        var blockPath = this.id(path);
-        var childBlock = new Block(this.wurd, blockPath);
+        var fullPath = this.id(path);
+        /* const childBlock = new Block(this.app, fullPath, this.get(path), {
+          lang: this.lang,
+          draft: this.draft,
+          editMode: this.editMode,
+        }); */
+
+        var childBlock = new Wurd(this.app, this.getOptions({
+          path: fullPath
+        }));
+        childBlock.store = this.store;
+        childBlock.cache = this.cache;
 
         if (typeof fn === 'function') {
           return fn.call(undefined, childBlock);
@@ -2157,7 +2497,7 @@
         var text = options.markdown ? this.markdown(path, vars) : this.text(path, vars);
         var editor = vars || options.markdown ? 'data-wurd-md' : 'data-wurd';
 
-        if (this.wurd.draft) {
+        if (this.draft) {
           var type = options.type || 'span';
           if (options.markdown) type = 'div';
           return "<".concat(type, " ").concat(editor, "=\"").concat(id, "\">").concat(text, "</").concat(type, ">");
@@ -2166,184 +2506,32 @@
         return text;
       }
       /**
-       * Returns the block helpers, bound to the block instance.
-       * This is useful if using object destructuring for shortcuts,
-       * for example `const {text, el} = block.bound()`
+       * Returns the HTML script tag which starts the Wurd editor
        *
-       * @return {Object}
-       */
-
-      /*
-      helpers(path) {
-        const block = path ? this.block(path) : this;
-         const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(block));
-         const boundMethods = methodNames.reduce((memo, name) => {
-          if (name === 'constructor') return memo;
-           memo[name] = block[name].bind(block);
-          return memo;
-        }, {});
-         return boundMethods;
-      }
-      */
-
-    }]);
-
-    return Block;
-  }();
-
-  var WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
-  var API_URL = 'https://api-v3.wurd.io';
-
-  var Wurd = /*#__PURE__*/function () {
-    function Wurd(appName, options) {
-      var _this = this;
-
-      _classCallCheck(this, Wurd);
-
-      this.store = new Store();
-      this.content = new Block(this, null); // Add block shortcut methods to the main Wurd instance
-
-      var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
-      methodNames.forEach(function (name) {
-        _this[name] = _this.content[name].bind(_this.content);
-      });
-      this.connect(appName, options);
-    }
-    /**
-     * Sets up the default connection/instance
-     *
-     * @param {String} appName
-     * @param {Object} [options]
-     * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
-     * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
-     * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
-     * @param {Object} [options.rawContent]         Content to populate the store with
-     */
-
-
-    _createClass(Wurd, [{
-      key: "connect",
-      value: function connect(appName) {
-        var _this2 = this;
-
-        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-        this.app = appName;
-        this.draft = false;
-        this.editMode = false; // Set allowed options
-
-        ['draft', 'lang', 'debug'].forEach(function (name) {
-          var val = options[name];
-          if (typeof val !== 'undefined') _this2[name] = val;
-        }); // Activate edit mode if required
-
-        switch (options.editMode) {
-          // Edit mode always on
-          case true:
-            this.startEditor();
-            break;
-          // Activate edit mode if the querystring contains an 'edit' parameter e.g. '?edit'
-
-          case 'querystring':
-            if (/[?&]edit(&|$)/.test(location.search)) {
-              this.startEditor();
-            }
-
-            break;
-        }
-
-        if (options.rawContent) {
-          this.store.setSections(options.rawContent);
-        }
-
-        if (options.blockHelpers) {
-          this.setBlockHelpers(options.blockHelpers);
-        }
-
-        return this;
-      }
-      /**
-       * Loads a section of content so that it's items are ready to be accessed with #get(id)
-       *
-       * @param {String} path     Section path e.g. `section`
+       * @return {String}
        */
 
     }, {
-      key: "load",
-      value: function load(path) {
-        var _this3 = this;
-
+      key: "includeEditor",
+      value: function includeEditor() {
+        if (!this.editMode) return '';
         var app = this.app,
-            store = this.store,
-            debug = this.debug;
-        return new Promise(function (resolve, reject) {
-          if (!app) {
-            return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
-          } // Return cached version if available
-
-
-          var sectionContent = store.get(path);
-
-          if (sectionContent) {
-            debug && console.info('from cache: ', path);
-            return resolve(sectionContent);
-          } // No cached version; fetch from server
-
-
-          debug && console.info('from server: ', path); // Build request URL
-
-          var params = ['draft', 'lang'].reduce(function (memo, param) {
-            if (_this3[param]) memo[param] = _this3[param];
-            return memo;
-          }, {});
-          var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(path, "?").concat(encodeQueryString(params));
-          return fetch(url).then(function (res) {
-            return res.json();
-          }).then(function (result) {
-            if (result.error) {
-              if (result.error.message) {
-                throw new Error(result.error.message);
-              } else {
-                throw new Error("Error loading ".concat(path));
-              }
-            } // Cache for next time
-            // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-
-
-            store.setSections(result);
-            resolve(_this3.content);
-          })["catch"](function (err) {
-            return reject(err);
-          });
-        });
-      }
-    }, {
-      key: "startEditor",
-      value: function startEditor() {
-        var app = this.app,
-            lang = this.lang; // Draft mode is always on if in edit mode
-
-        this.editMode = true;
-        this.draft = true;
-        var script = document.createElement('script');
-        script.src = WIDGET_URL;
-        script.async = true;
-        script.setAttribute('data-app', app);
-
-        if (lang) {
-          script.setAttribute('data-lang', lang);
-        }
-
-        document.getElementsByTagName('body')[0].appendChild(script);
-      }
-    }, {
-      key: "setBlockHelpers",
-      value: function setBlockHelpers(helpers) {
-        Object.assign(Block.prototype, helpers);
+            lang = this.lang;
+        return "<script src=\"https://edit-v3.wurd.io/widget.js\" data-app=\"".concat(app, "\" data-lang=\"").concat(lang || '', "\"></script>");
       }
     }]);
 
     return Wurd;
   }();
+  /**
+   * Export an client instance so it can be used directly, e.g.:
+   * ```
+   * import wurd from 'wurd';
+   * wurd.load('main')
+   * ```
+   */
+
+
   var instance = new Wurd();
   instance.Wurd = Wurd;
 

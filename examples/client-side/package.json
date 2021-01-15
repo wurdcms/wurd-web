@@ -1,0 +1,17 @@
+{
+  "name": "wurd-server-side-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^11.3.0"
+  },
+  "devDependencies": {}
+}
