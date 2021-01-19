@@ -188,7 +188,25 @@ describe('Block', function() {
 
 
   describe('#markdown()', function() {
+    it('parses markdown', function() {
+      const rawContent = {
+        a: 'Hello *{{name}}*',
+      };
 
+      const block = new Block(new Wurd('foo', { rawContent }), null);
+
+      same(block.markdown('a', { name: 'Bob' }), '<p>Hello <em>Bob</em></p>\n');
+    });
+
+    it('accepts "inline" option', function() {
+      const rawContent = {
+        a: 'Hello **{{name}}**',
+      };
+
+      const block = new Block(new Wurd('foo', { rawContent }), null);
+
+      same(block.markdown('a', { name: 'Bob' }, { inline: true }), 'Hello <strong>Bob</strong>');
+    });
   });
 
 
