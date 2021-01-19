@@ -4,8 +4,8 @@ import Store from './store';
 import Block from './block';
 
 
-const WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
-const API_URL = 'https://api-v3.wurd.io';
+const WIDGET_URL = 'https://widget.wurd.io/widget.js';
+const API_URL = 'https://api.wurd.io';
 
 
 class Wurd {

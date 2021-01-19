@@ -3283,8 +3283,8 @@
     return Block;
   }();
 
-  var WIDGET_URL = 'https://edit-v3.wurd.io/widget.js';
-  var API_URL = 'https://api-v3.wurd.io';
+  var WIDGET_URL = 'https://widget.wurd.io/widget.js';
+  var API_URL = 'https://api.wurd.io';
 
   var Wurd = /*#__PURE__*/function () {
     function Wurd(appName, options) {
