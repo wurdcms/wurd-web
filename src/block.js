@@ -98,10 +98,15 @@ export default class Block {
    *
    * @param {String} path       Item path e.g. `section.item`
    * @param {Object} [vars]     Variables to replace in the text
+   * @param {Boolean} [opts.inline]
    *
    * @return {Mixed}
    */
-  markdown(path, vars) {
+  markdown(path, vars, opts) {
+    if (opts?.inline && marked.parseInline) {
+      return marked.parseInline(this.text(path, vars));
+    }
+
     return marked(this.text(path, vars));
   }
 
