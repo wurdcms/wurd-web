@@ -194,11 +194,9 @@
   var replaceVars = function replaceVars(text) {
     var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     if (typeof text !== 'string') return text;
-    Object.keys(vars).forEach(function (key) {
-      var val = vars[key];
-      text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
+    return text.replace(/{{([\w.-]+)}}/g, function (_, key) {
+      return vars[key] || '';
     });
-    return text;
   };
 
   /*

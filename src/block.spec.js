@@ -116,7 +116,7 @@ describe('Block', function() {
             a: 'ABA',
             b: 'ABB'
           },
-          c: 'Hello {{name}}, today is {{day}}'
+          c: 'Hello {{name}}, today is {{day}}',
         }
       };
 
@@ -182,6 +182,13 @@ describe('Block', function() {
         same(liveBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
         
         same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
+      });
+
+      it('ignores not found variables', function(){
+        const {liveBlock, draftBlock} = this;
+
+        same(liveBlock.text('a.c', { name: 'John', extraVarNotUsed: '...' }), 'Hello John, today is ');
+        same(draftBlock.text('a.c', { name: 'John', extraVarNotUsed: '...' }), 'Hello John, today is ');
       });
     });
   });

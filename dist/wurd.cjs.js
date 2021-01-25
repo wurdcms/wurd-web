@@ -35,13 +35,7 @@ const encodeQueryString = function(data) {
 const replaceVars = function(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
-  Object.keys(vars).forEach(key => {
-    let val = vars[key];
-
-    text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
-  });
-
-  return text;
+  return text.replace(/{{([\w.-]+)}}/g, (_, key) => vars[key] || '');
 };
 
 class Store {
