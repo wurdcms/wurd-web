@@ -1,6 +1,3 @@
-import getValue from 'get-property-value';
-
-
 export default class Store {
 
   /**
@@ -12,11 +9,23 @@ export default class Store {
 
   /**
    * @param {String} path
-   *
    * @return {Mixed}
    */
   get(path) {
-    return getValue(this.rawContent, path);
+    return path.split('.').reduce((acc, k) => acc && acc[k], this.rawContent);
+  }
+
+  /**
+   * Load prefixes from store, if one prefix is missing return null
+   * @param {String} prefixes
+   * @return {Mixed}
+   */
+  getAll(prefixes) {
+    const entries = `${prefixes}`.split(',').map(key => [key, this.rawContent[key]]);
+
+    if (entries.every(entry => entry[1])) return Object.fromEntries(entries);
+
+    return null;
   }
 
   /**

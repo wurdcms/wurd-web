@@ -4,22 +4,6 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory());
 }(this, (function () { 'use strict';
 
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-      _typeof = function (obj) {
-        return typeof obj;
-      };
-    } else {
-      _typeof = function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-      };
-    }
-
-    return _typeof(obj);
-  }
-
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -175,13 +159,13 @@
    *
    * @return {String}
    */
-  var encodeQueryString = function encodeQueryString(data) {
+  function encodeQueryString(data) {
     var parts = Object.keys(data).map(function (key) {
       var value = data[key];
       return encodeURIComponent(key) + '=' + encodeURIComponent(value);
     });
     return parts.join('&');
-  };
+  }
   /**
    * Replaces {{mustache}} style placeholders in text with variables
    *
@@ -191,75 +175,12 @@
    * @return {String}
    */
 
-  var replaceVars = function replaceVars(text) {
+  function replaceVars(text) {
     var vars = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     if (typeof text !== 'string') return text;
-    Object.keys(vars).forEach(function (key) {
-      var val = vars[key];
-      text = text.replace(new RegExp("{{".concat(key, "}}"), 'g'), val);
+    return text.replace(/{{([\w.-]+)}}/g, function (_, key) {
+      return vars[key] || '';
     });
-    return text;
-  };
-
-  /*
-  eslint
-  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
-  padded-blocks: ["error", {"classes": "always"}]
-  max-len: ["error", 80]
-  */
-  var is_object = isObject;
-
-  function isObject(val) {
-    return !(val == null || _typeof(val) !== 'object' || Array.isArray(val));
-  }
-
-  /*
-  eslint
-  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
-  padded-blocks: ["error", {"classes": "always"}]
-  max-len: ["error", 80]
-  */
-
-  var array_some = some;
-
-  function some(arr, fn) {
-    var len = arr.length;
-    var i = -1;
-
-    while (++i < len) {
-      if (fn(arr[i], i, arr)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /*
-  eslint
-  no-multi-spaces: ["error", {exceptions: {"VariableDeclarator": true}}]
-  padded-blocks: ["error", {"classes": "always"}]
-  max-len: ["error", 80]
-  */
-
-  var getPropertyValue_1 = getPropertyValue;
-
-  function getPropertyValue(obj, path) {
-    if (!is_object(obj) || typeof path !== 'string') {
-      return obj;
-    }
-
-    var clone = obj;
-    array_some(path.split('.'), procPath);
-    return clone;
-
-    function procPath(p) {
-      clone = clone[p];
-
-      if (!clone) {
-        return true;
-      }
-    }
   }
 
   var Store = /*#__PURE__*/function () {
@@ -275,7 +196,6 @@
     }
     /**
      * @param {String} path
-     *
      * @return {Mixed}
      */
 
@@ -283,7 +203,28 @@
     _createClass(Store, [{
       key: "get",
       value: function get(path) {
-        return getPropertyValue_1(this.rawContent, path);
+        return path.split('.').reduce(function (acc, k) {
+          return acc && acc[k];
+        }, this.rawContent);
+      }
+      /**
+       * Load prefixes from store, if one prefix is missing return null
+       * @param {String} prefixes
+       * @return {Mixed}
+       */
+
+    }, {
+      key: "getAll",
+      value: function getAll(prefixes) {
+        var _this = this;
+
+        var entries = "".concat(prefixes).split(',').map(function (key) {
+          return [key, _this.rawContent[key]];
+        });
+        if (entries.every(function (entry) {
+          return entry[1];
+        })) return Object.fromEntries(entries);
+        return null;
       }
       /**
        * @param {Object} sections       Top level sections of content
@@ -3354,14 +3295,14 @@
         return this;
       }
       /**
-       * Loads a section of content so that it's items are ready to be accessed with #get(id)
+       * Loads a section of content so that its items are ready to be accessed with #get(id)
        *
-       * @param {String} path     Section path e.g. `section`
+       * @param {String|Array<String>} prefixes     Comma-separated sections e.g. `common,user,items`
        */
 
     }, {
       key: "load",
-      value: function load(path) {
+      value: function load(prefixes) {
         var _this3 = this;
 
         var app = this.app,
@@ -3373,21 +3314,21 @@
           } // Return cached version if available
 
 
-          var sectionContent = store.get(path);
+          var sectionContent = store.getAll(prefixes);
 
           if (sectionContent) {
-            debug && console.info('from cache: ', path);
+            debug && console.info('from cache: ', prefixes);
             return resolve(sectionContent);
           } // No cached version; fetch from server
 
 
-          debug && console.info('from server: ', path); // Build request URL
+          debug && console.info('from server: ', prefixes); // Build request URL
 
           var params = ['draft', 'lang'].reduce(function (memo, param) {
             if (_this3[param]) memo[param] = _this3[param];
             return memo;
           }, {});
-          var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(path, "?").concat(encodeQueryString(params));
+          var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(prefixes, "?").concat(encodeQueryString(params));
           return fetch(url).then(function (res) {
             return res.json();
           }).then(function (result) {
@@ -3395,7 +3336,7 @@
               if (result.error.message) {
                 throw new Error(result.error.message);
               } else {
-                throw new Error("Error loading ".concat(path));
+                throw new Error("Error loading ".concat(prefixes));
               }
             } // Cache for next time
             // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection

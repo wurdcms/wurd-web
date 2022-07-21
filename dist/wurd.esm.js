@@ -1,4 +1,3 @@
-import getValue from 'get-property-value';
 import marked from 'marked';
 
 /**
@@ -6,16 +5,15 @@ import marked from 'marked';
  *
  * @return {String}
  */
-const encodeQueryString = function(data) {
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
+function encodeQueryString(data) {
+  const parts = Object.keys(data).map(key => {
+    const value = data[key];
 
     return encodeURIComponent(key) + '=' + encodeURIComponent(value);
   });
 
   return parts.join('&');
-};
-
+}
 
 /**
  * Replaces {{mustache}} style placeholders in text with variables
@@ -25,17 +23,11 @@ const encodeQueryString = function(data) {
  *
  * @return {String}
  */
-const replaceVars = function(text, vars = {}) {
+function replaceVars(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
-  Object.keys(vars).forEach(key => {
-    let val = vars[key];
-
-    text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
-  });
-
-  return text;
-};
+  return text.replace(/{{([\w.-]+)}}/g, (_, key) => vars[key] || '');
+}
 
 class Store {
 
@@ -48,11 +40,23 @@ class Store {
 
   /**
    * @param {String} path
-   *
    * @return {Mixed}
    */
   get(path) {
-    return getValue(this.rawContent, path);
+    return path.split('.').reduce((acc, k) => acc && acc[k], this.rawContent);
+  }
+
+  /**
+   * Load prefixes from store, if one prefix is missing return null
+   * @param {String} prefixes
+   * @return {Mixed}
+   */
+  getAll(prefixes) {
+    const entries = `${prefixes}`.split(',').map(key => [key, this.rawContent[key]]);
+
+    if (entries.every(entry => entry[1])) return Object.fromEntries(entries);
+
+    return null;
   }
 
   /**
@@ -345,12 +349,12 @@ class Wurd {
   }
 
   /**
-   * Loads a section of content so that it's items are ready to be accessed with #get(id)
+   * Loads a section of content so that its items are ready to be accessed with #get(id)
    *
-   * @param {String} path     Section path e.g. `section`
+   * @param {String|Array<String>} prefixes     Comma-separated sections e.g. `common,user,items`
    */
-  load(path) {
-    let {app, store, debug} = this;
+  load(prefixes) {
+    const {app, store, debug} = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
@@ -358,15 +362,15 @@ class Wurd {
       }
 
       // Return cached version if available
-      let sectionContent = store.get(path);
+      const sectionContent = store.getAll(prefixes);
 
       if (sectionContent) {
-        debug && console.info('from cache: ', path);
+        debug && console.info('from cache: ', prefixes);
         return resolve(sectionContent);
       }
 
       // No cached version; fetch from server
-      debug && console.info('from server: ', path);
+      debug && console.info('from server: ', prefixes);
 
       // Build request URL
       const params = ['draft', 'lang'].reduce((memo, param) => {
@@ -375,7 +379,7 @@ class Wurd {
         return memo;
       }, {});
 
-      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
+      const url = `${API_URL}/apps/${app}/content/${prefixes}?${encodeQueryString(params)}`;
 
       return fetch(url)
         .then(res => res.json())
@@ -384,7 +388,7 @@ class Wurd {
             if (result.error.message) {
               throw new Error(result.error.message);
             } else {
-              throw new Error(`Error loading ${path}`);
+              throw new Error(`Error loading ${prefixes}`);
             }
           }
 
@@ -399,13 +403,13 @@ class Wurd {
   }
 
   startEditor() {
-    let {app, lang} = this;
+    const {app, lang} = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
     this.draft = true;
 
-    let script = document.createElement('script');
+    const script = document.createElement('script');
 
     script.src = WIDGET_URL;
     script.async = true;

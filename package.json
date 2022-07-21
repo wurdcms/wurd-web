@@ -36,7 +36,6 @@
   "author": "Charles Davison",
   "license": "MIT",
   "dependencies": {
-    "get-property-value": "^2.0.0",
     "marked": "^1.2.7"
   },
   "files": [
