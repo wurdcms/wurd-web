@@ -1,4 +1,4 @@
-import marked from 'marked';
+import { marked } from 'marked';
 
 import { replaceVars } from './utils';
 
@@ -107,7 +107,7 @@ export default class Block {
       return marked.parseInline(this.text(path, vars));
     }
 
-    return marked(this.text(path, vars));
+    return marked.parse(this.text(path, vars));
   }
 
   /**

@@ -2,10 +2,6 @@
 
 var marked = require('marked');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-var marked__default = /*#__PURE__*/_interopDefaultLegacy(marked);
-
 /**
  * @param {Object} data
  *
@@ -179,11 +175,11 @@ class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
-    if (opts?.inline && marked__default["default"].parseInline) {
-      return marked__default["default"].parseInline(this.text(path, vars));
+    if (opts?.inline && marked.marked.parseInline) {
+      return marked.marked.parseInline(this.text(path, vars));
     }
 
-    return marked__default["default"](this.text(path, vars));
+    return marked.marked.parse(this.text(path, vars));
   }
 
   /**

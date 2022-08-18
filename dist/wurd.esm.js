@@ -1,4 +1,4 @@
-import marked from 'marked';
+import { marked } from 'marked';
 
 /**
  * @param {Object} data
@@ -177,7 +177,7 @@ class Block {
       return marked.parseInline(this.text(path, vars));
     }
 
-    return marked(this.text(path, vars));
+    return marked.parse(this.text(path, vars));
   }
 
   /**
