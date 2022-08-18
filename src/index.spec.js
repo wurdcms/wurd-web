@@ -94,8 +94,8 @@ describe('Wurd', function() {
           test.deepEqual(client._fetchSections.args[0][0], ['ipsum', 'amet']);
           
           test.deepEqual(console.info.args, [
-            ['Wurd: load from cache:', ['lorem', 'dolor']],
-            ['Wurd: load from server:', ['ipsum', 'amet']],
+            ['Wurd: from cache:', ['lorem', 'dolor']],
+            ['Wurd: from server:', ['ipsum', 'amet']],
           ]);
 
           done();
@@ -113,7 +113,7 @@ describe('Wurd', function() {
           same(client._fetchSections.callCount, 0);
           
           test.deepEqual(console.info.args, [
-            ['Wurd: load from cache:', ['lorem', 'dolor']],
+            ['Wurd: from cache:', ['lorem', 'dolor']],
           ]);
 
           done();
@@ -128,8 +128,8 @@ describe('Wurd', function() {
           
           console.log(console.info.args)
           test.deepEqual(console.info.args, [
-            ['Wurd: load from cache:', ['lorem']],
-            ['Wurd: load from server:', ['ipsum']],
+            ['Wurd: from cache:', ['lorem']],
+            ['Wurd: from server:', ['ipsum']],
           ]);
 
           done();
@@ -143,8 +143,8 @@ describe('Wurd', function() {
           test.deepEqual(content.get('amet.title'), 'Amet');
 
           test.deepEqual(console.info.args, [
-            ['Wurd: load from cache:', ['dolor']],
-            ['Wurd: load from server:', ['amet']],
+            ['Wurd: from cache:', ['dolor']],
+            ['Wurd: from server:', ['amet']],
           ]);
 
           done();
