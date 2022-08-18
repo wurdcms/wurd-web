@@ -1,5 +1,3 @@
-import { marked } from 'marked';
-
 import { replaceVars } from './utils';
 
 
@@ -103,11 +101,18 @@ export default class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
-    if (opts?.inline && marked.parseInline) {
-      return marked.parseInline(this.text(path, vars));
+    const { parse, parseInline } = this.wurd.markdown;
+    const text = this.text(path, vars);
+
+    if (opts?.inline && parseInline) {
+      return parseInline(text);
     }
 
-    return marked.parse(this.text(path, vars));
+    if (parse) {
+      return parse(text);
+    }
+
+    return text;
   }
 
   /**

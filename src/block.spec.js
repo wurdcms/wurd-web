@@ -1,6 +1,8 @@
 const test = require('assert');
 const sinon = require('sinon');
 
+import { marked } from 'marked';
+
 import wurd from './';
 import Block from './block';
 
@@ -188,24 +190,46 @@ describe('Block', function() {
 
 
   describe('#markdown()', function() {
-    it('parses markdown', function() {
-      const rawContent = {
-        a: 'Hello *{{name}}*',
-      };
+    describe('when markdown is not setup', function () {
+      const client = new Wurd('appname', {
+        rawContent: {
+          home: { title: 'Welcome *{{name}}*' }
+        },
+      });
 
-      const block = new Block(new Wurd('foo', { rawContent }), null);
+      const block = new Block(client, null);
 
-      same(block.markdown('a', { name: 'Bob' }), '<p>Hello <em>Bob</em></p>\n');
+      it('warns and returns regular text', function () {
+        same(
+          block.markdown('home.title', { name: 'John' }),
+          'Welcome *John*'
+        );
+      });
     });
 
-    it('accepts "inline" option', function() {
-      const rawContent = {
-        a: 'Hello **{{name}}**',
-      };
+    describe('when marked is configured', function () {
+      const client = new Wurd('appname', {
+        rawContent: {
+          home: { title: 'Welcome *{{name}}*' }
+        },
+        markdown: marked,
+      });
 
-      const block = new Block(new Wurd('foo', { rawContent }), null);
+      const block = new Block(client, null);
 
-      same(block.markdown('a', { name: 'Bob' }, { inline: true }), 'Hello <strong>Bob</strong>');
+      it('parses markdown', function() {
+        same(
+          block.markdown('home.title', { name: 'Bob' }),
+          '<p>Welcome <em>Bob</em></p>\n'
+        );
+      });
+  
+      it('accepts "inline" option', function() {
+        same(
+          block.markdown('home.title', { name: 'Bob' }, { inline: true }),
+          'Welcome <em>Bob</em>'
+        );
+      });
     });
   });
 

@@ -1,7 +1,5 @@
 'use strict';
 
-var marked = require('marked');
-
 /**
  * @param {Object} data
  *
@@ -175,11 +173,18 @@ class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
-    if (opts?.inline && marked.marked.parseInline) {
-      return marked.marked.parseInline(this.text(path, vars));
+    const { parse, parseInline } = this.wurd.markdown;
+    const text = this.text(path, vars);
+
+    if (opts?.inline && parseInline) {
+      return parseInline(text);
     }
 
-    return marked.marked.parse(this.text(path, vars));
+    if (parse) {
+      return parse(text);
+    }
+
+    return text;
   }
 
   /**
@@ -315,6 +320,8 @@ class Wurd {
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
    * @param {Object} [options.rawContent]         Content to populate the store with
+   * @param {Function} [options.markdown.parse]   Markdown parser function, e.g. marked.parse(str)
+   * @param {Function} [options.markdown.parseInline] Markdown inline parser function, e.g. marked.parseInline(str)
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -323,7 +330,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'debug'].forEach(name => {
+    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;

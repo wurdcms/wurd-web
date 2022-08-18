@@ -20,6 +20,7 @@
     "@rollup/plugin-commonjs": "^22.0.2",
     "@rollup/plugin-eslint": "^8.0.2",
     "@rollup/plugin-node-resolve": "^13.3.0",
+    "marked": "^4.0.18",
     "mocha": "^10.0.0",
     "rollup": "^2.78.0",
     "rollup-plugin-filesize": "^9.1.2",
@@ -36,7 +37,6 @@
   "author": "Charles Davison",
   "license": "MIT",
   "dependencies": {
-    "marked": "^4.0.18"
   },
   "files": [
     "*.md",
