@@ -33,6 +33,8 @@ class Wurd {
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
    * @param {Object} [options.rawContent]         Content to populate the store with
+   * @param {Function} [options.markdown.parse]   Markdown parser function, e.g. marked.parse(str)
+   * @param {Function} [options.markdown.parseInline] Markdown inline parser function, e.g. marked.parseInline(str)
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -41,7 +43,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'debug'].forEach(name => {
+    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;

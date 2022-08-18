@@ -9,6 +9,9 @@
 
     <!-- Change to point to the file on your site or a CDN -->
     <script src="dist/wurd.min.js"></script>
+
+    <!-- Optional markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body class="container">
     <img data-wurd-img="home.heroImage" style="width: 100%" />
@@ -20,6 +23,9 @@
       var preConnectBlock = wurd.block('home');
 
       wurd.connect('example', {
+        // Optionally specify a markdown parser
+        markdown: marked,
+
         //Turn edit mode on when `?edit` is added to the page URL
         editMode: 'querystring',
         
