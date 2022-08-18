@@ -24,37 +24,31 @@ export default class Store {
   }
 
   /**
-   * Load top-level sections of content
+   * Load content from localStorage
    *
-   * @param {String[]} sectionNames
    * @return {Object}
    */
-  loadCache(sectionNames) {
-    let cachedContent;
-
+  load() {
     try {
-      cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+      const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+
+      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+
+      return { ...cachedContent, ...this.rawContent };
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
+
+      return this.rawContent;
     }
-
-    this.rawContent = {
-      ...!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent,
-      ...this.rawContent,
-    };
-
-    const entries = sectionNames.map(key => [key, this.rawContent[key]]);
-
-    return Object.fromEntries(entries);
   }
 
   /**
-   * Save top-levle sections of content
+   * Save content in cache
    *
-   * @param {Object} sections       Top level sections of content
+   * @param {Object} content
    */
-  saveCache(sections) {
-    Object.assign(this.rawContent, sections);
+  set(content) {
+    Object.assign(this.rawContent, content);
 
     localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
   }

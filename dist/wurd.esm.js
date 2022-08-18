@@ -55,37 +55,31 @@ class Store {
   }
 
   /**
-   * Load top-level sections of content
+   * Load content from localStorage
    *
-   * @param {String[]} sectionNames
    * @return {Object}
    */
-  loadCache(sectionNames) {
-    let cachedContent;
-
+  load() {
     try {
-      cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+      const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+
+      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+
+      return { ...cachedContent, ...this.rawContent };
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
+
+      return this.rawContent;
     }
-
-    this.rawContent = {
-      ...!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent,
-      ...this.rawContent,
-    };
-
-    const entries = sectionNames.map(key => [key, this.rawContent[key]]);
-
-    return Object.fromEntries(entries);
   }
 
   /**
-   * Save top-levle sections of content
+   * Save content in cache
    *
-   * @param {Object} sections       Top level sections of content
+   * @param {Object} content
    */
-  saveCache(sections) {
-    Object.assign(this.rawContent, sections);
+  set(content) {
+    Object.assign(this.rawContent, content);
 
     localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
   }
@@ -367,7 +361,7 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.saveCache(options.rawContent);
+      this.store.set(options.rawContent);
     }
 
     if (options.blockHelpers) {
@@ -383,33 +377,34 @@ class Wurd {
    * @param {String|Array<String>} sectionNames     Top-level sections to load e.g. `main,home`
    */
   load(sectionNames) {
-    const {app, store, debug} = this;
+    const {app, store, editMode, debug} = this;
 
     if (!app) {
       return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
     }
 
     // Normalise string sectionNames to array
-    if (typeof sectionNames === 'string') sectionNames = sectionNames.split(',');
+    const sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames;
 
     // Check for cached sections
-    const cachedContent = store.loadCache(sectionNames);
-    const uncachedSectionNames = sectionNames.filter(section => cachedContent[section] === undefined);
+    const cachedContent = store.load();
 
-    if (debug) console.info('Wurd: from cache:', sectionNames.filter(section => cachedContent[section] !== undefined));
+    const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
+
+    if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
 
     // Return now if all content was in cache
-    if (!uncachedSectionNames.length) {
+    if (!editMode && uncachedSections.length === 0) {
       return Promise.resolve(this.content);
     }
 
     // Some sections not in cache; fetch them from server
-    if (debug) console.info('Wurd: from server:', uncachedSectionNames);
+    if (debug) console.info('Wurd: from server:', uncachedSections);
 
-    return this._fetchSections(uncachedSectionNames)
+    return this._fetchSections(uncachedSections)
       .then(fetchedContent => {
         // Cache for next time
-        store.saveCache(fetchedContent);
+        store.set(fetchedContent);
 
         // Return the main Block instance for using content
         return this.content;
@@ -486,4 +481,4 @@ const instance = new Wurd();
 
 instance.Wurd = Wurd;
 
-export { instance as default };
+export default instance;

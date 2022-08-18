@@ -134,41 +134,33 @@
         }, this.rawContent);
       }
       /**
-       * Load top-level sections of content
+       * Load content from localStorage
        *
-       * @param {String[]} sectionNames
        * @return {Object}
        */
 
     }, {
-      key: "loadCache",
-      value: function loadCache(sectionNames) {
-        var _this = this;
-
-        var cachedContent;
-
+      key: "load",
+      value: function load() {
         try {
-          cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+          var cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+          if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+          return _objectSpread2(_objectSpread2({}, cachedContent), this.rawContent);
         } catch (err) {
           console.error('Wurd: error loading cache:', err);
+          return this.rawContent;
         }
-
-        this.rawContent = _objectSpread2(_objectSpread2({}, !cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent), this.rawContent);
-        var entries = sectionNames.map(function (key) {
-          return [key, _this.rawContent[key]];
-        });
-        return Object.fromEntries(entries);
       }
       /**
-       * Save top-levle sections of content
+       * Save content in cache
        *
-       * @param {Object} sections       Top level sections of content
+       * @param {Object} content
        */
 
     }, {
-      key: "saveCache",
-      value: function saveCache(sections) {
-        Object.assign(this.rawContent, sections);
+      key: "set",
+      value: function set(content) {
+        Object.assign(this.rawContent, content);
         localStorage.setItem(this.storageKey, JSON.stringify(_objectSpread2(_objectSpread2({}, this.rawContent), {}, {
           _expiry: Date.now() + this.maxAge
         })));
@@ -465,7 +457,7 @@
         }
 
         if (options.rawContent) {
-          this.store.saveCache(options.rawContent);
+          this.store.set(options.rawContent);
         }
 
         if (options.blockHelpers) {
@@ -487,6 +479,7 @@
 
         var app = this.app,
             store = this.store,
+            editMode = this.editMode,
             debug = this.debug;
 
         if (!app) {
@@ -494,25 +487,25 @@
         } // Normalise string sectionNames to array
 
 
-        if (typeof sectionNames === 'string') sectionNames = sectionNames.split(','); // Check for cached sections
+        var sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames; // Check for cached sections
 
-        var cachedContent = store.loadCache(sectionNames);
-        var uncachedSectionNames = sectionNames.filter(function (section) {
+        var cachedContent = store.load();
+        var uncachedSections = sections.filter(function (section) {
           return cachedContent[section] === undefined;
         });
-        if (debug) console.info('Wurd: from cache:', sectionNames.filter(function (section) {
+        if (debug) console.info('Wurd: from cache:', sections.filter(function (section) {
           return cachedContent[section] !== undefined;
         })); // Return now if all content was in cache
 
-        if (!uncachedSectionNames.length) {
+        if (!editMode && uncachedSections.length === 0) {
           return Promise.resolve(this.content);
         } // Some sections not in cache; fetch them from server
 
 
-        if (debug) console.info('Wurd: from server:', uncachedSectionNames);
-        return this._fetchSections(uncachedSectionNames).then(function (fetchedContent) {
+        if (debug) console.info('Wurd: from server:', uncachedSections);
+        return this._fetchSections(uncachedSections).then(function (fetchedContent) {
           // Cache for next time
-          store.saveCache(fetchedContent); // Return the main Block instance for using content
+          store.set(fetchedContent); // Return the main Block instance for using content
 
           return _this3.content;
         });

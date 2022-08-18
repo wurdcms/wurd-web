@@ -69,7 +69,7 @@ describe('store', function() {
   });
 
 
-  describe('#loadCache()', function () {
+  describe('#load()', function () {
     const store = new Store({
       a: { a: 'AA' },
       b: { a: 'BA' },
@@ -77,16 +77,16 @@ describe('store', function() {
     });
 
     it('returns requested sections', function () {
-      test.deepEqual(store.loadCache(['a', 'c', 'z']), {
+      test.deepEqual(store.load(), {
         a: { a: 'AA' },
+        b: { a: 'BA' },
         c: { a: 'CA' },
-        z: undefined,
       });
     });
   });
 
 
-  describe('#saveCache()', function () {
+  describe('#set()', function () {
     let store;
 
     beforeEach(function () {
@@ -99,7 +99,7 @@ describe('store', function() {
     });
 
     it('updates the content', function () {
-      store.saveCache({
+      store.set({
         a: { a: 'AA2', b: 'AB2' },
         c: { a: 'CA2', b: 'CB2' },
       });
