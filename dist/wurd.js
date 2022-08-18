@@ -1,8 +1,34 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory());
-})(this, (function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('marked')) :
+  typeof define === 'function' && define.amd ? define(['marked'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory(global.marked));
+})(this, (function (marked) { 'use strict';
+
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+
+    return target;
+  }
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -75,14 +101,21 @@
 
   var Store = /*#__PURE__*/function () {
     /**
-     * @param {Object} rawContent       Initial content
+     * @param {Object} rawContent            Initial content
+     * @param {String} opts.storageKey       localStorage key
+     * @param {Number} opts.maxAge           cache max-age in ms
      */
     function Store() {
+      var _opts$maxAge;
+
       var rawContent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       _classCallCheck(this, Store);
 
       this.rawContent = rawContent;
+      this.storageKey = opts.storageKey || 'cmsContent';
+      this.maxAge = (_opts$maxAge = opts.maxAge) !== null && _opts$maxAge !== void 0 ? _opts$maxAge : 3600000;
     }
     /**
      * Get a specific piece of content, top-level or nested
@@ -108,10 +141,19 @@
        */
 
     }, {
-      key: "getSections",
-      value: function getSections(sectionNames) {
+      key: "loadCache",
+      value: function loadCache(sectionNames) {
         var _this = this;
 
+        var cachedContent;
+
+        try {
+          cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+        } catch (err) {
+          console.error('Wurd: error loading cache:', err);
+        }
+
+        this.rawContent = _objectSpread2(_objectSpread2({}, !cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent), this.rawContent);
         var entries = sectionNames.map(function (key) {
           return [key, _this.rawContent[key]];
         });
@@ -124,9 +166,12 @@
        */
 
     }, {
-      key: "setSections",
-      value: function setSections(sections) {
+      key: "saveCache",
+      value: function saveCache(sections) {
         Object.assign(this.rawContent, sections);
+        localStorage.setItem(this.storageKey, JSON.stringify(_objectSpread2(_objectSpread2({}, this.rawContent), {}, {
+          _expiry: Date.now() + this.maxAge
+        })));
       }
     }]);
 
@@ -240,20 +285,13 @@
     }, {
       key: "markdown",
       value: function markdown(path, vars, opts) {
-        var _this$wurd$markdown = this.wurd.markdown,
-            parse = _this$wurd$markdown.parse,
-            parseInline = _this$wurd$markdown.parseInline;
         var text = this.text(path, vars);
 
-        if (opts !== null && opts !== void 0 && opts.inline && parseInline) {
-          return parseInline(text);
+        if (opts !== null && opts !== void 0 && opts.inline && marked.marked.parseInline) {
+          return marked.marked.parseInline(text);
         }
 
-        if (parse) {
-          return parse(text);
-        }
-
-        return text;
+        return marked.marked.parse(text);
       }
       /**
        * Iterates over a collection / list object with the given callback.
@@ -366,12 +404,16 @@
   var API_URL = 'https://api.wurd.io';
 
   var Wurd = /*#__PURE__*/function () {
+    /**
+     * @param {String} appName
+     * @param {String} [options.storageKey='cmsContent']         localStorage key for caching content
+     */
     function Wurd(appName, options) {
       var _this = this;
 
       _classCallCheck(this, Wurd);
 
-      this.store = new Store();
+      this.store = new Store(options && options.storageKey);
       this.content = new Block(this, null); // Add block shortcut methods to the main Wurd instance
 
       var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
@@ -389,8 +431,6 @@
      * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
      * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
      * @param {Object} [options.rawContent]         Content to populate the store with
-     * @param {Function} [options.markdown.parse]   Markdown parser function, e.g. marked.parse(str)
-     * @param {Function} [options.markdown.parseInline] Markdown inline parser function, e.g. marked.parseInline(str)
      */
 
 
@@ -404,7 +444,7 @@
         this.draft = false;
         this.editMode = false; // Set allowed options
 
-        ['draft', 'lang', 'markdown', 'debug'].forEach(function (name) {
+        ['draft', 'lang', 'debug'].forEach(function (name) {
           var val = options[name];
           if (typeof val !== 'undefined') _this2[name] = val;
         }); // Activate edit mode if required
@@ -425,7 +465,7 @@
         }
 
         if (options.rawContent) {
-          this.store.setSections(options.rawContent);
+          this.store.saveCache(options.rawContent);
         }
 
         if (options.blockHelpers) {
@@ -448,37 +488,33 @@
         var app = this.app,
             store = this.store,
             debug = this.debug;
-        return new Promise(function (resolve, reject) {
-          if (!app) {
-            return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
-          } // Normalise string sectionNames to array
+
+        if (!app) {
+          return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
+        } // Normalise string sectionNames to array
 
 
-          if (typeof sectionNames === 'string') sectionNames = sectionNames.split(','); // Check for cached sections
+        if (typeof sectionNames === 'string') sectionNames = sectionNames.split(','); // Check for cached sections
 
-          var cachedContent = store.getSections(sectionNames);
-          var cachedSectionNames = sectionNames.filter(function (section) {
-            return cachedContent[section] !== undefined;
-          });
-          var uncachedSectionNames = sectionNames.filter(function (section) {
-            return cachedContent[section] === undefined;
-          });
-          debug && console.info('Wurd: from cache:', cachedSectionNames); // Return now if all content was in cache
+        var cachedContent = store.loadCache(sectionNames);
+        var uncachedSectionNames = sectionNames.filter(function (section) {
+          return cachedContent[section] === undefined;
+        });
+        if (debug) console.info('Wurd: from cache:', sectionNames.filter(function (section) {
+          return cachedContent[section] !== undefined;
+        })); // Return now if all content was in cache
 
-          if (!uncachedSectionNames.length) {
-            return resolve(_this3.content);
-          } // Some sections not in cache; fetch them from server
+        if (!uncachedSectionNames.length) {
+          return Promise.resolve(this.content);
+        } // Some sections not in cache; fetch them from server
 
 
-          debug && console.info('Wurd: from server:', uncachedSectionNames);
-          return _this3._fetchSections(uncachedSectionNames).then(function (fetchedContent) {
-            // Cache for next time
-            store.setSections(fetchedContent); // Return the main Block instance for using content
+        if (debug) console.info('Wurd: from server:', uncachedSectionNames);
+        return this._fetchSections(uncachedSectionNames).then(function (fetchedContent) {
+          // Cache for next time
+          store.saveCache(fetchedContent); // Return the main Block instance for using content
 
-            resolve(_this3.content);
-          })["catch"](function (err) {
-            return reject(err);
-          });
+          return _this3.content;
         });
       }
     }, {
@@ -529,7 +565,13 @@
           script.setAttribute('data-lang', lang);
         }
 
-        document.getElementsByTagName('body')[0].appendChild(script);
+        var prevScript = document.body.querySelector("script[src=\"".concat(WIDGET_URL, "\"]"));
+
+        if (prevScript) {
+          document.body.removeChild(prevScript);
+        }
+
+        document.body.appendChild(script);
       }
     }, {
       key: "setBlockHelpers",

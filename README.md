@@ -9,12 +9,8 @@ If rendering on the server, use the API or [wurd-node](https://github.com/wurdcm
 ## Example
 ```javascript
 import wurd from 'wurd-web';
-import { marked } from 'marked';
 
-wurd.connect('myApp', {
-  editMode: true,
-  markdown: marked, // Optional to enable markdown parsing
-});
+wurd.connect('myApp', { editMode: true });
 
 wurd.load('homepage,shared')
   .then(content => {

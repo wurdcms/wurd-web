@@ -9,6 +9,10 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
+global.localStorage = {
+  setItem: sinon.fake(),
+  getItem: sinon.fake.returns('{}'),
+};
 
 describe('store', function() {
   afterEach(sinon.restore);
@@ -65,7 +69,7 @@ describe('store', function() {
   });
 
 
-  describe('#getSections()', function () {
+  describe('#loadCache()', function () {
     const store = new Store({
       a: { a: 'AA' },
       b: { a: 'BA' },
@@ -73,7 +77,7 @@ describe('store', function() {
     });
 
     it('returns requested sections', function () {
-      test.deepEqual(store.getSections(['a', 'c', 'z']), {
+      test.deepEqual(store.loadCache(['a', 'c', 'z']), {
         a: { a: 'AA' },
         c: { a: 'CA' },
         z: undefined,
@@ -82,7 +86,7 @@ describe('store', function() {
   });
 
 
-  describe('#setSections()', function () {
+  describe('#saveCache()', function () {
     let store;
 
     beforeEach(function () {
@@ -91,10 +95,11 @@ describe('store', function() {
         b: { a: 'BA' },
         c: { a: 'CA' },
       });
+
     });
 
     it('updates the content', function () {
-      store.setSections({
+      store.saveCache({
         a: { a: 'AA2', b: 'AB2' },
         c: { a: 'CA2', b: 'CB2' },
       });

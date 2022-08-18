@@ -28,6 +28,9 @@
     "serve": "^14.0.1",
     "sinon": "^14.0.0"
   },
+  "peerDependencies": {
+    "marked": "^4.0.18"
+  },
   "keywords": [
     "cms",
     "headless",
@@ -36,8 +39,6 @@
   ],
   "author": "Charles Davison",
   "license": "MIT",
-  "dependencies": {
-  },
   "files": [
     "*.md",
     "dist",

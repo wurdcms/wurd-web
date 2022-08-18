@@ -1,10 +1,14 @@
 export default class Store {
 
   /**
-   * @param {Object} rawContent       Initial content
+   * @param {Object} rawContent            Initial content
+   * @param {String} opts.storageKey       localStorage key
+   * @param {Number} opts.maxAge           cache max-age in ms
    */
-  constructor(rawContent = {}) {
+  constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
+    this.storageKey = opts.storageKey || 'cmsContent';
+    this.maxAge = opts.maxAge ?? 3600000;
   }
 
   /**
@@ -25,7 +29,20 @@ export default class Store {
    * @param {String[]} sectionNames
    * @return {Object}
    */
-  getSections(sectionNames) {
+  loadCache(sectionNames) {
+    let cachedContent;
+
+    try {
+      cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+    } catch (err) {
+      console.error('Wurd: error loading cache:', err);
+    }
+
+    this.rawContent = {
+      ...!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent,
+      ...this.rawContent,
+    };
+
     const entries = sectionNames.map(key => [key, this.rawContent[key]]);
 
     return Object.fromEntries(entries);
@@ -36,8 +53,10 @@ export default class Store {
    *
    * @param {Object} sections       Top level sections of content
    */
-  setSections(sections) {
+  saveCache(sections) {
     Object.assign(this.rawContent, sections);
+
+    localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
   }
 
 };

@@ -1,5 +1,7 @@
 'use strict';
 
+var marked = require('marked');
+
 /**
  * @param {Object} data
  *
@@ -32,10 +34,14 @@ function replaceVars(text, vars = {}) {
 class Store {
 
   /**
-   * @param {Object} rawContent       Initial content
+   * @param {Object} rawContent            Initial content
+   * @param {String} opts.storageKey       localStorage key
+   * @param {Number} opts.maxAge           cache max-age in ms
    */
-  constructor(rawContent = {}) {
+  constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
+    this.storageKey = opts.storageKey || 'cmsContent';
+    this.maxAge = opts.maxAge ?? 3600000;
   }
 
   /**
@@ -56,7 +62,20 @@ class Store {
    * @param {String[]} sectionNames
    * @return {Object}
    */
-  getSections(sectionNames) {
+  loadCache(sectionNames) {
+    let cachedContent;
+
+    try {
+      cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+    } catch (err) {
+      console.error('Wurd: error loading cache:', err);
+    }
+
+    this.rawContent = {
+      ...!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now() ? null : cachedContent,
+      ...this.rawContent,
+    };
+
     const entries = sectionNames.map(key => [key, this.rawContent[key]]);
 
     return Object.fromEntries(entries);
@@ -67,8 +86,10 @@ class Store {
    *
    * @param {Object} sections       Top level sections of content
    */
-  setSections(sections) {
+  saveCache(sections) {
     Object.assign(this.rawContent, sections);
+
+    localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
   }
 
 }
@@ -173,18 +194,13 @@ class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
-    const { parse, parseInline } = this.wurd.markdown;
     const text = this.text(path, vars);
 
-    if (opts?.inline && parseInline) {
-      return parseInline(text);
+    if (opts?.inline && marked.marked.parseInline) {
+      return marked.marked.parseInline(text);
     }
 
-    if (parse) {
-      return parse(text);
-    }
-
-    return text;
+    return marked.marked.parse(text);
   }
 
   /**
@@ -296,9 +312,12 @@ const API_URL = 'https://api.wurd.io';
 
 
 class Wurd {
-
+  /**
+   * @param {String} appName
+   * @param {String} [options.storageKey='cmsContent']         localStorage key for caching content
+   */
   constructor(appName, options) {
-    this.store = new Store();
+    this.store = new Store(options && options.storageKey);
     this.content = new Block(this, null);
 
     // Add block shortcut methods to the main Wurd instance
@@ -320,8 +339,6 @@ class Wurd {
    * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
    * @param {Object} [options.rawContent]         Content to populate the store with
-   * @param {Function} [options.markdown.parse]   Markdown parser function, e.g. marked.parse(str)
-   * @param {Function} [options.markdown.parseInline] Markdown inline parser function, e.g. marked.parseInline(str)
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -330,7 +347,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
+    ['draft', 'lang', 'debug'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;
@@ -352,7 +369,7 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.setSections(options.rawContent);
+      this.store.saveCache(options.rawContent);
     }
 
     if (options.blockHelpers) {
@@ -370,39 +387,35 @@ class Wurd {
   load(sectionNames) {
     const {app, store, debug} = this;
 
-    return new Promise((resolve, reject) => {
-      if (!app) {
-        return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
-      }
+    if (!app) {
+      return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
+    }
 
-      // Normalise string sectionNames to array
-      if (typeof sectionNames === 'string') sectionNames = sectionNames.split(',');
+    // Normalise string sectionNames to array
+    if (typeof sectionNames === 'string') sectionNames = sectionNames.split(',');
 
-      // Check for cached sections
-      const cachedContent = store.getSections(sectionNames);
-      const cachedSectionNames = sectionNames.filter(section => cachedContent[section] !== undefined);
-      const uncachedSectionNames = sectionNames.filter(section => cachedContent[section] === undefined);
+    // Check for cached sections
+    const cachedContent = store.loadCache(sectionNames);
+    const uncachedSectionNames = sectionNames.filter(section => cachedContent[section] === undefined);
 
-      debug && console.info('Wurd: from cache:', cachedSectionNames);
+    if (debug) console.info('Wurd: from cache:', sectionNames.filter(section => cachedContent[section] !== undefined));
 
-      // Return now if all content was in cache
-      if (!uncachedSectionNames.length) {
-        return resolve(this.content);
-      }
+    // Return now if all content was in cache
+    if (!uncachedSectionNames.length) {
+      return Promise.resolve(this.content);
+    }
 
-      // Some sections not in cache; fetch them from server
-      debug && console.info('Wurd: from server:', uncachedSectionNames);
+    // Some sections not in cache; fetch them from server
+    if (debug) console.info('Wurd: from server:', uncachedSectionNames);
 
-      return this._fetchSections(uncachedSectionNames)
-        .then(fetchedContent => {
-          // Cache for next time
-          store.setSections(fetchedContent);
+    return this._fetchSections(uncachedSectionNames)
+      .then(fetchedContent => {
+        // Cache for next time
+        store.saveCache(fetchedContent);
 
-          // Return the main Block instance for using content
-          resolve(this.content);
-        })
-        .catch(err => reject(err));
-    });
+        // Return the main Block instance for using content
+        return this.content;
+      });
   }
 
   _fetchSections(sectionNames) {
@@ -456,7 +469,13 @@ class Wurd {
       script.setAttribute('data-lang', lang);
     }
 
-    document.getElementsByTagName('body')[0].appendChild(script);
+    const prevScript = document.body.querySelector(`script[src="${WIDGET_URL}"]`);
+
+    if (prevScript) {
+      document.body.removeChild(prevScript);
+    }
+
+    document.body.appendChild(script);
   }
 
   setBlockHelpers(helpers) {

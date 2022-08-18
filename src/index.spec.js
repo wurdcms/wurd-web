@@ -10,6 +10,12 @@ const Wurd = wurd.Wurd;
 const same = test.strictEqual;
 
 
+global.localStorage = {
+  getItem: sinon.fake.returns('{}'),
+  setItem: sinon.fake(),
+};
+
+
 describe('Wurd', function() {
   afterEach(function() {
     sinon.restore();
@@ -77,7 +83,7 @@ describe('Wurd', function() {
           same(content.get('lorem.title'), 'Lorem');
 
           done();
-        });
+        }).catch(done);
     });
 
     it('loads content from cache and server', function (done) {
@@ -99,7 +105,7 @@ describe('Wurd', function() {
           ]);
 
           done();
-        });
+        }).catch(done);
     });
 
     it('does not fetch from server if all content is available', function (done) {
@@ -117,7 +123,7 @@ describe('Wurd', function() {
           ]);
 
           done();
-        })
+        }).catch(done);
     });
 
     it('works with an array of sectionNames', function (done) {
@@ -125,15 +131,14 @@ describe('Wurd', function() {
         .then(content => {
           test.deepEqual(content.get('lorem.title'), 'Lorem');
           test.deepEqual(content.get('ipsum.title'), 'Ipsum');
-          
-          console.log(console.info.args)
+
           test.deepEqual(console.info.args, [
             ['Wurd: from cache:', ['lorem']],
             ['Wurd: from server:', ['ipsum']],
           ]);
 
           done();
-        });
+        }).catch(done);
     })
 
     it('works with a comma separated string', function (done) {
@@ -148,7 +153,7 @@ describe('Wurd', function() {
           ]);
 
           done();
-        });
+        }).catch(done);
     })
   });
 
@@ -177,7 +182,7 @@ describe('Wurd', function() {
           });
 
           done();
-        });
+        }).catch(done);
     });
 
     it('works in draft mode', function (done) {
@@ -189,7 +194,7 @@ describe('Wurd', function() {
           same(client._fetch.args[0][0], 'https://api.wurd.io/apps/myapp/content/common,main?draft=true');
 
           done();
-        });
+        }).catch(done);
     });
 
     it('works with a different language', function (done) {
@@ -201,7 +206,7 @@ describe('Wurd', function() {
           same(client._fetch.args[0][0], 'https://api.wurd.io/apps/myapp/content/common,main?lang=es');
 
           done();
-        });
+        }).catch(done);
     });
   })
 

@@ -1,8 +1,6 @@
 const test = require('assert');
 const sinon = require('sinon');
 
-import { marked } from 'marked';
-
 import wurd from './';
 import Block from './block';
 
@@ -10,12 +8,15 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
+global.localStorage = {
+  setItem: sinon.fake(),
+  getItem: sinon.fake.returns('{}'),
+};
 
 describe('Block', function() {
   afterEach(function() {
     sinon.restore();
   });
-
 
   describe('#id()', function() {
     describe('with no path argument', function() {
@@ -190,46 +191,26 @@ describe('Block', function() {
 
 
   describe('#markdown()', function() {
-    describe('when markdown is not setup', function () {
-      const client = new Wurd('appname', {
-        rawContent: {
-          home: { title: 'Welcome *{{name}}*' }
-        },
-      });
-
-      const block = new Block(client, null);
-
-      it('warns and returns regular text', function () {
-        same(
-          block.markdown('home.title', { name: 'John' }),
-          'Welcome *John*'
-        );
-      });
+    const client = new Wurd('appname', {
+      rawContent: {
+        home: { title: 'Welcome *{{name}}*' }
+      },
     });
 
-    describe('when marked is configured', function () {
-      const client = new Wurd('appname', {
-        rawContent: {
-          home: { title: 'Welcome *{{name}}*' }
-        },
-        markdown: marked,
-      });
+    const block = new Block(client, null);
 
-      const block = new Block(client, null);
+    it('parses markdown', function() {
+      same(
+        block.markdown('home.title', { name: 'Bob' }),
+        '<p>Welcome <em>Bob</em></p>\n'
+      );
+    });
 
-      it('parses markdown', function() {
-        same(
-          block.markdown('home.title', { name: 'Bob' }),
-          '<p>Welcome <em>Bob</em></p>\n'
-        );
-      });
-  
-      it('accepts "inline" option', function() {
-        same(
-          block.markdown('home.title', { name: 'Bob' }, { inline: true }),
-          'Welcome <em>Bob</em>'
-        );
-      });
+    it('accepts "inline" option', function() {
+      same(
+        block.markdown('home.title', { name: 'Bob' }, { inline: true }),
+        'Welcome <em>Bob</em>'
+      );
     });
   });
 
