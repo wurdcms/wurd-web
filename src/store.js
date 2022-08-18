@@ -8,27 +8,32 @@ export default class Store {
   }
 
   /**
-   * @param {String} path
+   * Get a specific piece of content, top-level or nested
+   *
+   * @param {String} path e.g. 'section','section.subSection','a.b.c.d'
    * @return {Mixed}
    */
   get(path) {
+    if (!path) return this.rawContent;
+
     return path.split('.').reduce((acc, k) => acc && acc[k], this.rawContent);
   }
 
   /**
-   * Load prefixes from store, if one prefix is missing return null
-   * @param {String} prefixes
-   * @return {Mixed}
+   * Load top-level sections of content
+   *
+   * @param {String[]} sectionNames
+   * @return {Object}
    */
-  getAll(prefixes) {
-    const entries = `${prefixes}`.split(',').map(key => [key, this.rawContent[key]]);
+  getSections(sectionNames) {
+    const entries = sectionNames.map(key => [key, this.rawContent[key]]);
 
-    if (entries.every(entry => entry[1])) return Object.fromEntries(entries);
-
-    return null;
+    return Object.fromEntries(entries);
   }
 
   /**
+   * Save top-levle sections of content
+   *
    * @param {Object} sections       Top level sections of content
    */
   setSections(sections) {
