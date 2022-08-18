@@ -49,7 +49,9 @@ describe('Wurd', function() {
     let client;
 
     beforeEach(function () {
-      client = wurd.connect('appname');
+      client = wurd.connect('appname', {
+        debug: true,
+      });
 
       // Set cached content
       client.store.rawContent = {
@@ -62,6 +64,8 @@ describe('Wurd', function() {
         ipsum: { title: 'Ipsum' },
         amet: { title: 'Amet' }
       });
+
+      sinon.stub(console, 'info');
     });
 
     it('resolves the main content Block', function (done) {
@@ -88,6 +92,11 @@ describe('Wurd', function() {
 
           same(client._fetchSections.callCount, 1);
           test.deepEqual(client._fetchSections.args[0][0], ['ipsum', 'amet']);
+          
+          test.deepEqual(console.info.args, [
+            ['Wurd: load from cache:', ['lorem', 'dolor']],
+            ['Wurd: load from server:', ['ipsum', 'amet']],
+          ]);
 
           done();
         });
@@ -102,6 +111,10 @@ describe('Wurd', function() {
           });
 
           same(client._fetchSections.callCount, 0);
+          
+          test.deepEqual(console.info.args, [
+            ['Wurd: load from cache:', ['lorem', 'dolor']],
+          ]);
 
           done();
         })
@@ -112,6 +125,12 @@ describe('Wurd', function() {
         .then(content => {
           test.deepEqual(content.get('lorem.title'), 'Lorem');
           test.deepEqual(content.get('ipsum.title'), 'Ipsum');
+          
+          console.log(console.info.args)
+          test.deepEqual(console.info.args, [
+            ['Wurd: load from cache:', ['lorem']],
+            ['Wurd: load from server:', ['ipsum']],
+          ]);
 
           done();
         });
@@ -122,6 +141,11 @@ describe('Wurd', function() {
         .then(content => {
           test.deepEqual(content.get('dolor.title'), 'Dolor');
           test.deepEqual(content.get('amet.title'), 'Amet');
+
+          test.deepEqual(console.info.args, [
+            ['Wurd: load from cache:', ['dolor']],
+            ['Wurd: load from server:', ['amet']],
+          ]);
 
           done();
         });

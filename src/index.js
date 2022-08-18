@@ -81,7 +81,7 @@ class Wurd {
   /**
    * Loads sections of content so that items are ready to be accessed with #get(id)
    *
-   * @param {String|Array<String>} sectionNames     Array or comma-separated string of sections e.g. `common,user,items`
+   * @param {String|Array<String>} sectionNames     Array or comma-separated string of top-level sections e.g. `common,user,items`
    */
   load(sectionNames) {
     const {app, store, debug} = this;
@@ -96,11 +96,10 @@ class Wurd {
 
       // Check for cached sections
       const cachedContent = store.getSections(sectionNames);
-      const uncachedSectionNames = Object.keys(cachedContent).filter(section => {
-        return cachedContent[section] === undefined;
-      });
+      const cachedSectionNames = sectionNames.filter(section => cachedContent[section] !== undefined);
+      const uncachedSectionNames = sectionNames.filter(section => cachedContent[section] === undefined);
 
-      debug && console.info('from cache: ', uncachedSectionNames);
+      debug && console.info('Wurd: load from cache:', cachedSectionNames);
 
       // Return now if all content was in cache
       if (!uncachedSectionNames.length) {
@@ -108,7 +107,7 @@ class Wurd {
       }
 
       // Some sections not in cache; fetch them from server
-      debug && console.info('from server: ', uncachedSectionNames);
+      debug && console.info('Wurd: load from server:', uncachedSectionNames);
 
       return this._fetchSections(uncachedSectionNames)
         .then(fetchedContent => {
