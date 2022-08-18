@@ -14,7 +14,7 @@ describe('store', function() {
   afterEach(sinon.restore);
 
 
-  describe('get', function() {
+  describe('#get()', function() {
     const store = new Store({
       main: {
         a: 'A',
@@ -56,10 +56,33 @@ describe('store', function() {
     it('returns undefined for invalid values', function () {
       same(store.get('main.z.a'), undefined);
     });
+
+    /* it('returns whole content without a path', function () {
+      same(store.get(), {
+
+      });
+    }); */
   });
 
 
-  describe('setSections', function() {
+  describe('#getSections()', function () {
+    const store = new Store({
+      a: { a: 'AA' },
+      b: { a: 'BA' },
+      c: { a: 'CA' },
+    });
+
+    it('returns requested sections', function () {
+      test.deepEqual(store.getSections(['a', 'c', 'z']), {
+        a: { a: 'AA' },
+        c: { a: 'CA' },
+        z: undefined,
+      });
+    });
+  });
+
+
+  describe('#setSections()', function () {
     let store;
 
     beforeEach(function () {

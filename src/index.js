@@ -77,67 +77,92 @@ class Wurd {
   }
 
   /**
-   * Loads a section of content so that it's items are ready to be accessed with #get(id)
+   * Loads sections of content so that items are ready to be accessed with #get(id)
    *
-   * @param {String} path     Section path e.g. `section`
+   * @param {String|Array<String>} sectionNames     Array or comma-separated string of sections e.g. `common,user,items`
    */
-  load(path) {
-    let {app, store, debug} = this;
+  load(sectionNames) {
+    const {app, store, debug} = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
         return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
       }
 
-      // Return cached version if available
-      let sectionContent = store.get(path);
+      // Normalise string sectionNames to array
+      if (typeof sectionNames === 'string') sectionNames = sectionNames.split(',');
 
-      if (sectionContent) {
-        debug && console.info('from cache: ', path);
-        return resolve(sectionContent);
+      // Check for cached sections
+      const cachedContent = store.getSections(sectionNames);
+      const uncachedSectionNames = Object.keys(cachedContent).filter(section => {
+        return cachedContent[section] === undefined;
+      });
+
+      debug && console.info('from cache: ', uncachedSectionNames);
+
+      // Return now if all content was in cache
+      if (!uncachedSectionNames.length) {
+        return resolve(this.content);
       }
 
-      // No cached version; fetch from server
-      debug && console.info('from server: ', path);
+      // Some sections not in cache; fetch them from server
+      debug && console.info('from server: ', uncachedSectionNames);
 
-      // Build request URL
-      const params = ['draft', 'lang'].reduce((memo, param) => {
-        if (this[param]) memo[param] = this[param];
-
-        return memo;
-      }, {});
-
-      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
-
-      return fetch(url)
-        .then(res => res.json())
-        .then(result => {
-          if (result.error) {
-            if (result.error.message) {
-              throw new Error(result.error.message);
-            } else {
-              throw new Error(`Error loading ${path}`);
-            }
-          }
-
+      return this._fetchSections(uncachedSectionNames)
+        .then(fetchedContent => {
           // Cache for next time
-          // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          store.setSections(result);
+          store.setSections(fetchedContent);
 
+          // Return the main Block instance for using content
           resolve(this.content);
         })
         .catch(err => reject(err));
     });
   }
 
+  _fetchSections(sectionNames) {
+    const {app} = this;
+
+    // Build request URL
+    const params = ['draft', 'lang'].reduce((memo, param) => {
+      if (this[param]) memo[param] = this[param];
+
+      return memo;
+    }, {});
+
+    const url = `${API_URL}/apps/${app}/content/${sectionNames}?${encodeQueryString(params)}`;
+
+    return this._fetch(url)
+      .then(result => {
+        if (result.error) {
+          if (result.error.message) {
+            throw new Error(result.error.message);
+          } else {
+            throw new Error(`Error loading ${sectionNames}`);
+          }
+        };
+
+        return result;
+      });
+  }
+
+  _fetch(url) {
+    return fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error(`Error loading ${url}: ${res.statusText}`);
+
+        return res.json();
+      });
+  }
+
   startEditor() {
-    let {app, lang} = this;
+    const {app, lang} = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
     this.draft = true;
 
-    let script = document.createElement('script');
+    const script = document.createElement('script');
 
     script.src = WIDGET_URL;
     script.async = true;

@@ -1,4 +1,3 @@
-import getValue from 'get-property-value';
 import marked from 'marked';
 
 /**
@@ -6,16 +5,15 @@ import marked from 'marked';
  *
  * @return {String}
  */
-const encodeQueryString = function(data) {
-  let parts = Object.keys(data).map(key => {
-    let value = data[key];
+function encodeQueryString(data) {
+  const parts = Object.keys(data).map(key => {
+    const value = data[key];
 
     return encodeURIComponent(key) + '=' + encodeURIComponent(value);
   });
 
   return parts.join('&');
-};
-
+}
 
 /**
  * Replaces {{mustache}} style placeholders in text with variables
@@ -25,17 +23,11 @@ const encodeQueryString = function(data) {
  *
  * @return {String}
  */
-const replaceVars = function(text, vars = {}) {
+function replaceVars(text, vars = {}) {
   if (typeof text !== 'string') return text;
 
-  Object.keys(vars).forEach(key => {
-    let val = vars[key];
-
-    text = text.replace(new RegExp(`{{${key}}}`, 'g'), val);
-  });
-
-  return text;
-};
+  return text.replace(/{{([\w.-]+)}}/g, (_, key) => vars[key] || '');
+}
 
 class Store {
 
@@ -47,15 +39,32 @@ class Store {
   }
 
   /**
-   * @param {String} path
+   * Get a specific piece of content, top-level or nested
    *
+   * @param {String} path e.g. 'section','section.subSection','a.b.c.d'
    * @return {Mixed}
    */
   get(path) {
-    return getValue(this.rawContent, path);
+    if (!path) return this.rawContent;
+
+    return path.split('.').reduce((acc, k) => acc && acc[k], this.rawContent);
   }
 
   /**
+   * Load top-level sections of content
+   *
+   * @param {String[]} sectionNames
+   * @return {Object}
+   */
+  getSections(sectionNames) {
+    const entries = sectionNames.map(key => [key, this.rawContent[key]]);
+
+    return Object.fromEntries(entries);
+  }
+
+  /**
+   * Save top-levle sections of content
+   *
    * @param {Object} sections       Top level sections of content
    */
   setSections(sections) {
@@ -345,67 +354,91 @@ class Wurd {
   }
 
   /**
-   * Loads a section of content so that it's items are ready to be accessed with #get(id)
+   * Loads sections of content so that items are ready to be accessed with #get(id)
    *
-   * @param {String} path     Section path e.g. `section`
+   * @param {String|Array<String>} sectionNames     Array or comma-separated string of sections e.g. `common,user,items`
    */
-  load(path) {
-    let {app, store, debug} = this;
+  load(sectionNames) {
+    const {app, store, debug} = this;
 
     return new Promise((resolve, reject) => {
       if (!app) {
         return reject(new Error('Use wurd.connect(appName) before wurd.load()'));
       }
 
-      // Return cached version if available
-      let sectionContent = store.get(path);
+      // Normalise string sectionNames to array
+      if (typeof sectionNames === 'string') sectionNames = sectionNames.split(',');
 
-      if (sectionContent) {
-        debug && console.info('from cache: ', path);
-        return resolve(sectionContent);
+      // Check for cached sections
+      const cachedContent = store.getSections(sectionNames);
+      const uncachedSectionNames = Object.keys(cachedContent).filter(section => {
+        return cachedContent[section] === undefined;
+      });
+
+      debug && console.info('from cache: ', uncachedSectionNames);
+
+      // Return now if all content was in cache
+      if (!uncachedSectionNames.length) {
+        return resolve(this.content);
       }
 
-      // No cached version; fetch from server
-      debug && console.info('from server: ', path);
+      // Some sections not in cache; fetch them from server
+      debug && console.info('from server: ', uncachedSectionNames);
 
-      // Build request URL
-      const params = ['draft', 'lang'].reduce((memo, param) => {
-        if (this[param]) memo[param] = this[param];
-
-        return memo;
-      }, {});
-
-      const url = `${API_URL}/apps/${app}/content/${path}?${encodeQueryString(params)}`;
-
-      return fetch(url)
-        .then(res => res.json())
-        .then(result => {
-          if (result.error) {
-            if (result.error.message) {
-              throw new Error(result.error.message);
-            } else {
-              throw new Error(`Error loading ${path}`);
-            }
-          }
-
+      return this._fetchSections(uncachedSectionNames)
+        .then(fetchedContent => {
           // Cache for next time
-          // TODO: Does this cause problems if future load() calls use nested paths e.g. main.subsection
-          store.setSections(result);
+          store.setSections(fetchedContent);
 
+          // Return the main Block instance for using content
           resolve(this.content);
         })
         .catch(err => reject(err));
     });
   }
 
+  _fetchSections(sectionNames) {
+    const {app} = this;
+
+    // Build request URL
+    const params = ['draft', 'lang'].reduce((memo, param) => {
+      if (this[param]) memo[param] = this[param];
+
+      return memo;
+    }, {});
+
+    const url = `${API_URL}/apps/${app}/content/${sectionNames}?${encodeQueryString(params)}`;
+
+    return this._fetch(url)
+      .then(result => {
+        if (result.error) {
+          if (result.error.message) {
+            throw new Error(result.error.message);
+          } else {
+            throw new Error(`Error loading ${sectionNames}`);
+          }
+        }
+        return result;
+      });
+  }
+
+  _fetch(url) {
+    return fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error(`Error loading ${url}: ${res.statusText}`);
+
+        return res.json();
+      });
+  }
+
   startEditor() {
-    let {app, lang} = this;
+    const {app, lang} = this;
 
     // Draft mode is always on if in edit mode
     this.editMode = true;
     this.draft = true;
 
-    let script = document.createElement('script');
+    const script = document.createElement('script');
 
     script.src = WIDGET_URL;
     script.async = true;
@@ -428,4 +461,4 @@ const instance = new Wurd();
 
 instance.Wurd = Wurd;
 
-export default instance;
+export { instance as default };
