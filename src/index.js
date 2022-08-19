@@ -32,10 +32,12 @@ class Wurd {
    *
    * @param {String} appName
    * @param {Object} [options]
-   * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
-   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
-   * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
-   * @param {Object} [options.rawContent]         Content to populate the store with
+   * @param {Boolean|String} [options.editMode] Options for enabling edit mode: `true` or `'querystring'`
+   * @param {Object} [options.markdown] Enable markdown parsing. Works directly with `marked` npm package
+   *                                    or an object of shape {parse: Function, parseInline: Function}
+   * @param {Boolean} [options.draft] If true, loads draft content; otherwise loads published content
+   * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
+   * @param {Object} [options.rawContent] Content to populate the store with
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -44,7 +46,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'debug'].forEach(name => {
+    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;

@@ -4,7 +4,7 @@
   "description": "Vanilla JS browser client for the Wurd CMS",
   "main": "dist/wurd.cjs.js",
   "module": "dist/wurd.esm.js",
-  "browser": "dist/wurd.esm.js",
+  "browser": "dist/wurd.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -28,9 +28,6 @@
     "serve": "^14.0.1",
     "sinon": "^14.0.0"
   },
-  "peerDependencies": {
-    "marked": "^4.0.18"
-  },
   "keywords": [
     "cms",
     "headless",
@@ -39,6 +36,8 @@
   ],
   "author": "Charles Davison",
   "license": "MIT",
+  "dependencies": {
+  },
   "files": [
     "*.md",
     "dist",

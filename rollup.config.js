@@ -10,20 +10,17 @@ export default [
   // browser-friendly UMD build
   {
     input: 'src/index.js',
-    external: ['marked'],
     output: [
       {
         name: 'wurd',
         file: pkg.browser,
         format: 'umd',
-        globals: { marked: 'marked' },
         plugins: [filesize()],
       },
       {
         name: 'wurd',
         file: 'dist/wurd.min.js',
         format: 'umd',
-        globals: { marked: 'marked' },
         plugins: [terser()],
       },
     ],
@@ -44,7 +41,7 @@ export default [
   // CommonJS (for Node) and ES module (for bundlers) build.
   {
     input: 'src/index.js',
-    external: ['marked'],
+    external: [],
     output: [
       { file: pkg.main, format: 'cjs' },
       { file: pkg.module, format: 'es' }
