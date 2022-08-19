@@ -10,11 +10,6 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
-global.localStorage = {
-  setItem: sinon.fake(),
-  getItem: sinon.fake.returns('{}'),
-};
-
 
 describe('Block', function() {
   afterEach(function() {

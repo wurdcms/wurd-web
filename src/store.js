@@ -3,7 +3,7 @@ export default class Store {
   /**
    * @param {Object} rawContent            Initial content
    * @param {String} opts.storageKey       localStorage key
-   * @param {Number} opts.maxAge           cache max-age in ms
+   * @param {Number} opts.maxAge           cache max-age in ms (default 1 hour)
    */
   constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
@@ -24,17 +24,21 @@ export default class Store {
   }
 
   /**
-   * Load content from localStorage
+   * Load top-level sections of content from localStorage
    *
    * @return {Object}
    */
-  load() {
+  loadSections() {
     try {
       const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
 
       if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
 
-      return { ...cachedContent, ...this.rawContent };
+      delete cachedContent['_expiry'];
+
+      Object.assign(this.rawContent, cachedContent);
+
+      return this.rawContent;
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
 
@@ -43,14 +47,17 @@ export default class Store {
   }
 
   /**
-   * Save content in cache
+   * Save top-level sections of content to localStorage
    *
    * @param {Object} content
    */
-  set(content) {
+  saveSections(content) {
     Object.assign(this.rawContent, content);
 
-    localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
+    localStorage.setItem(this.storageKey, JSON.stringify({
+      ...this.rawContent,
+      _expiry: Date.now() + this.maxAge,
+    }));
   }
 
 };

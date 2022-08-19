@@ -10,12 +10,6 @@ const Wurd = wurd.Wurd;
 const same = test.strictEqual;
 
 
-global.localStorage = {
-  getItem: sinon.fake.returns('{}'),
-  setItem: sinon.fake(),
-};
-
-
 describe('Wurd', function() {
   afterEach(function() {
     sinon.restore();
@@ -66,7 +60,8 @@ describe('Wurd', function() {
       };
 
       // Set uncached content
-      sinon.stub(client, '_fetchSections').resolves({
+      sinon.spy(client, '_fetchSections');
+      sinon.stub(client, '_fetch').resolves({
         ipsum: { title: 'Ipsum' },
         amet: { title: 'Amet' }
       });
@@ -155,6 +150,29 @@ describe('Wurd', function() {
           done();
         }).catch(done);
     })
+    
+    it('skips cache if in editMode', function (done) {
+      client.editMode = true;
+      
+      client.load(['lorem','ipsum','dolor','amet'])
+        .then(content => {
+          test.deepEqual(content.get(), {
+            lorem: { title: 'Lorem' },
+            ipsum: { title: 'Ipsum' },
+            dolor: { title: 'Dolor' },
+            amet: { title: 'Amet' }
+          });
+
+          same(client._fetchSections.callCount, 1);
+          test.deepEqual(client._fetchSections.args[0][0], ['lorem', 'ipsum', 'dolor', 'amet']);
+          
+          test.deepEqual(console.info.args, [
+            ['Wurd: from server:', ['lorem', 'ipsum', 'dolor', 'amet']],
+          ]);
+
+          done();
+        }).catch(done);
+    });
   });
 
 
@@ -162,7 +180,7 @@ describe('Wurd', function() {
     let client;
 
     beforeEach(function () {
-      client = wurd.connect('myapp');
+      client = new Wurd('myapp');
 
       sinon.stub(client, '_fetch').resolves({
         common: { brand: 'MyApp' },

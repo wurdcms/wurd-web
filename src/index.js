@@ -71,7 +71,7 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.set(options.rawContent);
+      this.store.saveSections(options.rawContent);
     }
 
     if (options.blockHelpers) {
@@ -96,33 +96,34 @@ class Wurd {
     // Normalise string sectionNames to array
     const sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames;
 
+    // When in editMode we skip the cache completely
+    if (editMode) {
+      return this._fetchSections(sections)
+        .then(() => this.content);
+    }
+
     // Check for cached sections
-    const cachedContent = store.load();
+    const cachedContent = store.loadSections();
 
     const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
 
     if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
 
     // Return now if all content was in cache
-    if (!editMode && uncachedSections.length === 0) {
+    if (uncachedSections.length === 0) {
       return Promise.resolve(this.content);
     }
 
-    // Some sections not in cache; fetch them from server
-    if (debug) console.info('Wurd: from server:', uncachedSections);
-
+    // Otherwise fetch remaining sections
     return this._fetchSections(uncachedSections)
-      .then(fetchedContent => {
-        // Cache for next time
-        store.set(fetchedContent);
-
-        // Return the main Block instance for using content
-        return this.content;
-      });
+      .then(() => this.content);
   }
 
   _fetchSections(sectionNames) {
-    const {app} = this;
+    const {app, store, debug} = this;
+
+    // Some sections not in cache; fetch them from server
+    if (debug) console.info('Wurd: from server:', sectionNames);
 
     // Build request URL
     const params = ['draft', 'lang'].reduce((memo, param) => {
@@ -142,6 +143,9 @@ class Wurd {
             throw new Error(`Error loading ${sectionNames}`);
           }
         };
+
+        // Cache for next time
+        store.saveSections(result);
 
         return result;
       });

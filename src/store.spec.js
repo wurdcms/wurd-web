@@ -3,16 +3,16 @@ const sinon = require('sinon');
 
 import wurd from './';
 import Store from './store';
-import Block from './block';
 
 const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
 global.localStorage = {
-  setItem: sinon.fake(),
-  getItem: sinon.fake.returns('{}'),
+  setItem: sinon.stub(),
+  getItem: sinon.stub().returns('{}'),
 };
+
 
 describe('store', function() {
   afterEach(sinon.restore);
@@ -69,15 +69,32 @@ describe('store', function() {
   });
 
 
-  describe('#load()', function () {
+  describe('#loadSections()', function () {
     const store = new Store({
       a: { a: 'AA' },
-      b: { a: 'BA' },
-      c: { a: 'CA' },
+    }, {
+      storageKey: 'customKey',
     });
 
-    it('returns requested sections', function () {
-      test.deepEqual(store.load(), {
+    it('loads from localStorage into the memory store', function () {
+      const expiry = Date.now() + 1000;
+
+      global.localStorage.getItem.returns(JSON.stringify({
+        a: { a: 'AA' },
+        b: { a: 'BA' },
+        c: { a: 'CA' },
+        _expiry: expiry,
+      }));
+
+      // Returns the content
+      test.deepEqual(store.loadSections(), {
+        a: { a: 'AA' },
+        b: { a: 'BA' },
+        c: { a: 'CA' },
+      });
+
+      // Loads to store for use by get()
+      test.deepEqual(store.rawContent, {
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
@@ -86,7 +103,7 @@ describe('store', function() {
   });
 
 
-  describe('#set()', function () {
+  describe('#saveSections()', function () {
     let store;
 
     beforeEach(function () {
@@ -95,11 +112,10 @@ describe('store', function() {
         b: { a: 'BA' },
         c: { a: 'CA' },
       });
-
     });
 
     it('updates the content', function () {
-      store.set({
+      store.saveSections({
         a: { a: 'AA2', b: 'AB2' },
         c: { a: 'CA2', b: 'CB2' },
       });
