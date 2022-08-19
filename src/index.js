@@ -97,9 +97,11 @@ class Wurd {
     // Check for cached sections
     const cachedContent = store.load();
 
-    const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
+    const uncachedSections = cachedContent ?
+      sections.filter(section => cachedContent[section] === undefined) :
+      sections;
 
-    if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
+    if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent?.[section] !== undefined));
 
     // Return now if all content was in cache
     if (!editMode && uncachedSections.length === 0) {
@@ -113,6 +115,7 @@ class Wurd {
       .then(fetchedContent => {
         // Cache for next time
         store.set(fetchedContent);
+        store.save();
 
         // Return the main Block instance for using content
         return this.content;

@@ -57,6 +57,15 @@ class Store {
   }
 
   /**
+   * Save content in cache
+   *
+   * @param {Object} content
+   */
+  set(content) {
+    return Object.assign(this.rawContent || {}, content);
+  }
+
+  /**
    * Load content from localStorage
    *
    * @return {Object}
@@ -65,9 +74,15 @@ class Store {
     try {
       const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
 
-      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+      // console.log('..', localStorage.getItem(this.storageKey), global.localStorage.getItem());
 
-      return { ...cachedContent, ...this.rawContent };
+      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) {
+        return this.rawContent;
+      }
+
+      this.rawContent = cachedContent;
+
+      return this.rawContent;
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
 
@@ -75,17 +90,9 @@ class Store {
     }
   }
 
-  /**
-   * Save content in cache
-   *
-   * @param {Object} content
-   */
-  set(content) {
-    Object.assign(this.rawContent, content);
-
+  save() {
     localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
   }
-
 }
 
 class Block {
@@ -391,9 +398,11 @@ class Wurd {
     // Check for cached sections
     const cachedContent = store.load();
 
-    const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
+    const uncachedSections = cachedContent ?
+      sections.filter(section => cachedContent[section] === undefined) :
+      sections;
 
-    if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
+    if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent?.[section] !== undefined));
 
     // Return now if all content was in cache
     if (!editMode && uncachedSections.length === 0) {
@@ -407,6 +416,7 @@ class Wurd {
       .then(fetchedContent => {
         // Cache for next time
         store.set(fetchedContent);
+        store.save();
 
         // Return the main Block instance for using content
         return this.content;

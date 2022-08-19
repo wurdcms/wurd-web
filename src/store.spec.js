@@ -9,14 +9,12 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
-global.localStorage = {
-  setItem: sinon.fake(),
-  getItem: sinon.fake.returns('{}'),
-};
 
 describe('store', function() {
-  afterEach(sinon.restore);
-
+  afterEach(() => {
+    sinon.restore();
+    global.localStorage = {};
+  });
 
   describe('#get()', function() {
     const store = new Store({
@@ -70,18 +68,20 @@ describe('store', function() {
 
 
   describe('#load()', function () {
-    const store = new Store({
-      a: { a: 'AA' },
-      b: { a: 'BA' },
-      c: { a: 'CA' },
-    });
-
     it('returns requested sections', function () {
-      test.deepEqual(store.load(), {
+      const store = new Store();
+      const cachedContent = {
+        _expiry: Date.now() + 5000,
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
-      });
+      };
+
+      global.localStorage = {
+        getItem: () => JSON.stringify(cachedContent),
+      };
+
+      test.deepEqual(store.load(), cachedContent);
     });
   });
 

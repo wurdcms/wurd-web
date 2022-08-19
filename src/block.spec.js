@@ -8,10 +8,6 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
-global.localStorage = {
-  setItem: sinon.fake(),
-  getItem: sinon.fake.returns('{}'),
-};
 
 describe('Block', function() {
   afterEach(function() {
@@ -39,6 +35,8 @@ describe('Block', function() {
 
 
   describe('#get()', function() {
+    let liveWurd, draftWurd;
+
     beforeEach(function() {
       const rawContent = {
         a: {
@@ -50,11 +48,11 @@ describe('Block', function() {
         }
       };
 
-      this.liveWurd = new Wurd('live', {
+      liveWurd = new Wurd('live', {
         rawContent
       });
 
-      this.draftWurd = new Wurd('draft', {
+      draftWurd = new Wurd('draft', {
         draft: true, 
         rawContent
       });
@@ -64,8 +62,6 @@ describe('Block', function() {
 
     describe('when item exists', function() {
       it('returns the content', function() {
-        const {liveWurd, draftWurd} = this;
-
         const liveBlock = new Block(liveWurd);
         const draftBlock = new Block(draftWurd);
 
@@ -77,8 +73,6 @@ describe('Block', function() {
       });
 
       it('returns the content for child blocks', function() {
-        const {liveWurd, draftWurd} = this;
-
         const liveBlock = new Block(liveWurd, 'a.b');
         const draftBlock = new Block(draftWurd, 'a.b');
 
@@ -94,8 +88,6 @@ describe('Block', function() {
 
     describe('when item is missing', function() {
       it('returns undefined', function() {
-        const {liveWurd, draftWurd} = this;
-
         const liveBlock = new Block(liveWurd, null);
         const draftBlock = new Block(draftWurd, null);
 
@@ -111,6 +103,8 @@ describe('Block', function() {
 
 
   describe('#text()', function() {
+    let liveBlock, draftBlock;
+
     beforeEach(function() {
       const rawContent = {
         a: {
@@ -123,17 +117,15 @@ describe('Block', function() {
         }
       };
 
-      this.liveBlock = new Block(new Wurd('live', {rawContent}), null);
+      liveBlock = new Block(new Wurd('live', {rawContent}), null);
 
-      this.draftBlock = new Block(new Wurd('draft', {rawContent, draft: true}), null);
+      draftBlock = new Block(new Wurd('draft', {rawContent, draft: true}), null);
 
       sinon.stub(console, 'warn');
     });
 
     describe('when item exists', function() {
       it('returns the text content', function() {
-        const {liveBlock, draftBlock} = this;
-
         same(liveBlock.text('a.a'), 'AA');
 
         same(draftBlock.text('a.a'), 'AA');
@@ -142,22 +134,16 @@ describe('Block', function() {
 
     describe('when item is missing', function() {
       it('returns empty string in live mode', function() {
-        const {liveBlock} = this;
-
         same(liveBlock.text('a.foo'), '');
       });
 
       it('returns path in draft mode', function() {
-        const {draftBlock} = this;
-
         same(draftBlock.text('a.foo'), '[a.foo]');
       });
     });
 
     describe('when item is not text', function() {
       it('prints a warning to the console', function() {
-        const {liveBlock} = this;
-
         liveBlock.text('a.b');
 
         same(console.warn.callCount, 1);
@@ -166,22 +152,16 @@ describe('Block', function() {
       });
 
       it('returns empty string in live mode', function() {
-        const {liveBlock} = this;
-
         same(liveBlock.text('a.b'), '');
       });
 
       it('returns path in draft mode', function() {
-        const {draftBlock} = this;
-
         same(draftBlock.text('a.b'), '[a.b]');
       });
     });
 
     describe('with vars argument', function() {
       it('replaces {{mustache}} style placeholders with vars', function() {
-        const {liveBlock, draftBlock} = this;
-
         same(liveBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');
         
         same(draftBlock.text('a.c', { name: 'John', day: 'Monday' }), 'Hello John, today is Monday');

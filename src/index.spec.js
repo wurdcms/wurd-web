@@ -8,19 +8,14 @@ import Block from './block';
 const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
-
-
-global.localStorage = {
-  getItem: sinon.fake.returns('{}'),
-  setItem: sinon.fake(),
-};
+const pick = (o, keys) => Object.fromEntries(Object.entries(o).filter(([k]) => keys.includes(k)));
 
 
 describe('Wurd', function() {
   afterEach(function() {
     sinon.restore();
+    global.localStorage = {};
   });
-
 
   describe('connect', function() {
     it('returns a client, which is also the default library instance', function() {
@@ -72,6 +67,11 @@ describe('Wurd', function() {
       });
 
       sinon.stub(console, 'info');
+
+      global.localStorage = {
+        setItem: () => {},
+        getItem: () => '{}',
+      };
     });
 
     it('resolves the main content Block', function (done) {
@@ -80,6 +80,7 @@ describe('Wurd', function() {
           test.ok(content instanceof Block);
 
           same(content.id(), null);
+          console.log(content.get);
           same(content.get('lorem.title'), 'Lorem');
 
           done();
@@ -89,7 +90,7 @@ describe('Wurd', function() {
     it('loads content from cache and server', function (done) {
       client.load(['lorem','ipsum','dolor','amet'])
         .then(content => {
-          test.deepEqual(content.get(), {
+          test.deepEqual(pick(content.get(), ['lorem','ipsum','dolor','amet']), {
             lorem: { title: 'Lorem' },
             ipsum: { title: 'Ipsum' },
             dolor: { title: 'Dolor' },
@@ -111,7 +112,7 @@ describe('Wurd', function() {
     it('does not fetch from server if all content is available', function (done) {
       client.load(['lorem', 'dolor'])
         .then(content => {
-          test.deepEqual(content.get(), {
+          test.deepEqual(pick(content.get(), ['lorem', 'dolor']), {
             lorem: { title: 'Lorem' },
             dolor: { title: 'Dolor' },
           });
