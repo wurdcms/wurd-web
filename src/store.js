@@ -26,13 +26,16 @@ export default class Store {
   /**
    * Load top-level sections of content from localStorage
    *
-   * @return {Object}
+   * @param {String[]} sectionNames
+   * @return {Object} content
    */
-  loadSections() {
+  load(sectionNames) {
     try {
       const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
 
-      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) {
+        return this.rawContent;
+      }
 
       delete cachedContent['_expiry'];
 
@@ -51,7 +54,7 @@ export default class Store {
    *
    * @param {Object} content
    */
-  saveSections(content) {
+  save(content) {
     Object.assign(this.rawContent, content);
 
     localStorage.setItem(this.storageKey, JSON.stringify({

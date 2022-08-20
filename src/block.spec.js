@@ -12,8 +12,21 @@ const same = test.strictEqual;
 
 
 describe('Block', function() {
+  let originalLocalStorage;
+
+  beforeEach(function() {
+    originalLocalStorage = global.localStorage;
+
+    global.localStorage = {
+      setItem: sinon.stub(),
+      getItem: sinon.stub().returns('{}'),
+    };
+  });
+
   afterEach(function() {
     sinon.restore();
+
+    global.localStorage = originalLocalStorage;
   });
 
 
@@ -191,15 +204,15 @@ describe('Block', function() {
 
   describe('#markdown()', function() {
     describe('when markdown is not setup', function () {
-      const client = new Wurd('appname', {
-        rawContent: {
-          home: { title: 'Welcome *{{name}}*' }
-        },
-      });
-
-      const block = new Block(client, null);
-
       it('warns and returns regular text', function () {
+        const client = new Wurd('appname', {
+          rawContent: {
+            home: { title: 'Welcome *{{name}}*' }
+          },
+        });
+  
+        const block = new Block(client, null);
+
         same(
           block.markdown('home.title', { name: 'John' }),
           'Welcome *John*'
@@ -208,14 +221,18 @@ describe('Block', function() {
     });
 
     describe('when marked is configured', function () {
-      const client = new Wurd('appname', {
-        rawContent: {
-          home: { title: 'Welcome *{{name}}*' }
-        },
-        markdown: marked,
-      });
+      let block;
 
-      const block = new Block(client, null);
+      beforeEach(function () {
+        const client = new Wurd('appname', {
+          rawContent: {
+            home: { title: 'Welcome *{{name}}*' }
+          },
+          markdown: marked,
+        });
+  
+        block = new Block(client, null);
+      });
 
       it('parses markdown', function() {
         same(

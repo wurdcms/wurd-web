@@ -71,7 +71,7 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.saveSections(options.rawContent);
+      this.store.save(options.rawContent);
     }
 
     if (options.blockHelpers) {
@@ -103,7 +103,7 @@ class Wurd {
     }
 
     // Check for cached sections
-    const cachedContent = store.loadSections();
+    const cachedContent = store.load();
 
     const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
 
@@ -145,7 +145,7 @@ class Wurd {
         };
 
         // Cache for next time
-        store.saveSections(result);
+        store.save(result);
 
         return result;
       });

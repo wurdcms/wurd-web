@@ -8,14 +8,24 @@ const Wurd = wurd.Wurd;
 
 const same = test.strictEqual;
 
-global.localStorage = {
-  setItem: sinon.stub(),
-  getItem: sinon.stub().returns('{}'),
-};
-
 
 describe('store', function() {
-  afterEach(sinon.restore);
+  let originalLocalStorage;
+
+  beforeEach(function() {
+    originalLocalStorage = global.localStorage;
+
+    global.localStorage = {
+      setItem: sinon.stub(),
+      getItem: sinon.stub().returns('{}'),
+    };
+  });
+
+  afterEach(function() {
+    sinon.restore();
+
+    global.localStorage = originalLocalStorage;
+  });
 
 
   describe('#get()', function() {
@@ -69,17 +79,21 @@ describe('store', function() {
   });
 
 
-  describe('#loadSections()', function () {
-    const store = new Store({
-      a: { a: 'AA' },
-    }, {
-      storageKey: 'customKey',
+  describe('#load()', function () {
+    let store;
+
+    beforeEach(function (){
+      store = new Store({
+        a: { a: 'AA' },
+      }, {
+        storageKey: 'customKey',
+      });
     });
 
     it('loads from localStorage into the memory store', function () {
       const expiry = Date.now() + 1000;
 
-      global.localStorage.getItem.returns(JSON.stringify({
+      global.localStorage.getItem.withArgs('customKey').returns(JSON.stringify({
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
@@ -87,7 +101,7 @@ describe('store', function() {
       }));
 
       // Returns the content
-      test.deepEqual(store.loadSections(), {
+      test.deepEqual(store.load(), {
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
@@ -100,10 +114,29 @@ describe('store', function() {
         c: { a: 'CA' },
       });
     });
+
+    it('returns memory content if there is no localStorage', function () {
+      global.localStorage.getItem.returns('{}');
+
+      test.deepEqual(store.load(), {
+        a: { a: 'AA' },
+      });
+    });
+
+    it('returns memory content if localStorage has expired', function () {
+      global.localStorage.getItem.returns(JSON.stringify({
+        b: { a: 'BA' },
+        _expiry: new Date() - 10000,
+      }));
+
+      test.deepEqual(store.load(), {
+        a: { a: 'AA' },
+      });
+    });
   });
 
 
-  describe('#saveSections()', function () {
+  describe('#save()', function () {
     let store;
 
     beforeEach(function () {
@@ -111,11 +144,16 @@ describe('store', function() {
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
+      }, {
+        storageKey: 'customKey',
+        maxAge: 360000,
       });
+
+      sinon.useFakeTimers(1234);
     });
 
     it('updates the content', function () {
-      store.saveSections({
+      store.save({
         a: { a: 'AA2', b: 'AB2' },
         c: { a: 'CA2', b: 'CB2' },
       });
@@ -125,6 +163,15 @@ describe('store', function() {
         b: { a: 'BA' },
         c: { a: 'CA2', b: 'CB2' },
       });
+
+      same(global.localStorage.setItem.callCount, 1);
+      same(global.localStorage.setItem.args[0][0], 'customKey');
+      same(global.localStorage.setItem.args[0][1], JSON.stringify({
+        a: { a: 'AA2', b: 'AB2' },
+        b: { a: 'BA' },
+        c: { a: 'CA2', b: 'CB2' },
+        _expiry: 361234, // maxAge + sinon.fakeTimer value
+      }));
     });
   });
 

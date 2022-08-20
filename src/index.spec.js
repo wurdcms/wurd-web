@@ -11,8 +11,21 @@ const same = test.strictEqual;
 
 
 describe('Wurd', function() {
+  let originalLocalStorage;
+
+  beforeEach(function() {
+    originalLocalStorage = global.localStorage;
+
+    global.localStorage = {
+      setItem: sinon.stub(),
+      getItem: sinon.stub().returns('{}'),
+    };
+  });
+
   afterEach(function() {
     sinon.restore();
+
+    global.localStorage = originalLocalStorage;
   });
 
 
