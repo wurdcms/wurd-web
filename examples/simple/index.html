@@ -23,11 +23,11 @@
       var preConnectBlock = wurd.block('home');
 
       wurd.connect('example', {
-        // Optionally specify a markdown parser
-        markdown: marked,
-
         //Turn edit mode on when `?edit` is added to the page URL
         editMode: 'querystring',
+
+        // Optionally specify a markdown parser
+        markdown: marked,
         
         //Define helpers to create editable regions etc.
         blockHelpers: {
@@ -41,6 +41,8 @@
         },
 
         debug: true,
+
+        storeMaxAge: 10000,
       });
 
       wurd.load('nav,home')

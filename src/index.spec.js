@@ -19,6 +19,7 @@ describe('Wurd', function() {
     global.localStorage = {
       setItem: sinon.stub(),
       getItem: sinon.stub().returns('{}'),
+      removeItem: sinon.stub(),
     };
   });
 
@@ -78,6 +79,8 @@ describe('Wurd', function() {
         ipsum: { title: 'Ipsum' },
         amet: { title: 'Amet' }
       });
+
+      sinon.stub(client.store, 'clear');
 
       sinon.stub(console, 'info');
     });
@@ -182,6 +185,9 @@ describe('Wurd', function() {
           test.deepEqual(console.info.args, [
             ['Wurd: from server:', ['lorem', 'ipsum', 'dolor', 'amet']],
           ]);
+
+          // Should clear the cache so content is up to date when out of editMode again
+          same(client.store.clear.callCount, 1);
 
           done();
         }).catch(done);

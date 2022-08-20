@@ -7,7 +7,7 @@ export default class Store {
    */
   constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
-    this.storageKey = opts.storageKey || 'cmsContent';
+    this.storageKey = opts.storageKey || 'wurdContent';
     this.maxAge = opts.maxAge ?? 3600000;
   }
 
@@ -53,6 +53,7 @@ export default class Store {
    * Save top-level sections of content to localStorage
    *
    * @param {Object} content
+   * @param {Boolean} [options.cache] Whether to save the content to cache
    */
   save(content) {
     Object.assign(this.rawContent, content);
@@ -61,6 +62,13 @@ export default class Store {
       ...this.rawContent,
       _expiry: Date.now() + this.maxAge,
     }));
+  }
+
+  /**
+   * Clears the localStorage cache
+   */
+  clear() {
+    localStorage.removeItem(this.storageKey);
   }
 
 };

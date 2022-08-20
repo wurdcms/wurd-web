@@ -11,10 +11,9 @@ const API_URL = 'https://api.wurd.io';
 class Wurd {
   /**
    * @param {String} appName
-   * @param {String} [options.storageKey='cmsContent']         localStorage key for caching content
    */
-  constructor(appName, options) {
-    this.store = new Store(options && options.storageKey);
+  constructor(appName, options = {}) {
+    this.store = new Store();
     this.content = new Block(this, null);
 
     // Add block shortcut methods to the main Wurd instance
@@ -74,6 +73,9 @@ class Wurd {
       this.store.save(options.rawContent);
     }
 
+    if (options.storeKey) this.store.storageKey = options.storeKey;
+    if (options.storeMaxAge) this.store.maxAge = options.storeMaxAge;
+
     if (options.blockHelpers) {
       this.setBlockHelpers(options.blockHelpers);
     }
@@ -99,7 +101,14 @@ class Wurd {
     // When in editMode we skip the cache completely
     if (editMode) {
       return this._fetchSections(sections)
-        .then(() => this.content);
+        .then(result => {
+          store.save(result);
+
+          // Clear the cache so changes are reflected immediately when out of editMode
+          store.clear();
+
+          return this.content;
+        });
     }
 
     // Check for cached sections
@@ -116,11 +125,16 @@ class Wurd {
 
     // Otherwise fetch remaining sections
     return this._fetchSections(uncachedSections)
-      .then(() => this.content);
+      .then(result => {
+        // Cache for next time
+        store.save(result);
+
+        return this.content;
+      });
   }
 
   _fetchSections(sectionNames) {
-    const {app, store, debug} = this;
+    const {app, debug} = this;
 
     // Some sections not in cache; fetch them from server
     if (debug) console.info('Wurd: from server:', sectionNames);
@@ -143,9 +157,6 @@ class Wurd {
             throw new Error(`Error loading ${sectionNames}`);
           }
         };
-
-        // Cache for next time
-        store.save(result);
 
         return result;
       });
