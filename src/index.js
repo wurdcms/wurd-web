@@ -31,10 +31,11 @@ class Wurd {
    *
    * @param {String} appName
    * @param {Object} [options]
+   * @param {Boolean} [options.lang] Specific language to use
    * @param {Boolean|String} [options.editMode] Options for enabling edit mode: `true` or `'querystring'`
+   * @param {Boolean} [options.draft] If true, loads draft content; otherwise loads published content
    * @param {Object} [options.markdown] Enable markdown parsing. Works directly with `marked` npm package
    *                                    or an object of shape {parse: Function, parseInline: Function}
-   * @param {Boolean} [options.draft] If true, loads draft content; otherwise loads published content
    * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
    * @param {Object} [options.rawContent] Content to populate the store with
    */
@@ -70,11 +71,11 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.save(options.rawContent);
+      this.store.save(options.rawContent, { lang: options.lang });
     }
 
-    if (options.storeKey) this.store.storageKey = options.storeKey;
-    if (options.storeMaxAge) this.store.maxAge = options.storeMaxAge;
+    if (options.storageKey) this.store.storageKey = options.storageKey;
+    if (options.ttl) this.store.ttl = options.ttl;
 
     if (options.blockHelpers) {
       this.setBlockHelpers(options.blockHelpers);
@@ -89,7 +90,7 @@ class Wurd {
    * @param {String|Array<String>} sectionNames     Top-level sections to load e.g. `main,home`
    */
   load(sectionNames) {
-    const {app, store, editMode, debug} = this;
+    const {app, store, lang, editMode, debug} = this;
 
     if (!app) {
       return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
@@ -102,7 +103,7 @@ class Wurd {
     if (editMode) {
       return this._fetchSections(sections)
         .then(result => {
-          store.save(result);
+          store.save(result, { lang });
 
           // Clear the cache so changes are reflected immediately when out of editMode
           store.clear();
@@ -112,7 +113,7 @@ class Wurd {
     }
 
     // Check for cached sections
-    const cachedContent = store.load();
+    const cachedContent = store.load(sections, { lang });
 
     const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
 
@@ -127,7 +128,7 @@ class Wurd {
     return this._fetchSections(uncachedSections)
       .then(result => {
         // Cache for next time
-        store.save(result);
+        store.save(result, { lang });
 
         return this.content;
       });

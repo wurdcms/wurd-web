@@ -28,7 +28,7 @@
         lang: new URLSearchParams(window.location.search).get('lang'),
 
         debug: true,
-        storeMaxAge: 10000,
+        ttl: 10_000,
       });
 
       wurd.load('nav,home')

@@ -1,14 +1,14 @@
 export default class Store {
 
   /**
-   * @param {Object} rawContent            Initial content
-   * @param {String} opts.storageKey       localStorage key
-   * @param {Number} opts.maxAge           cache max-age in ms (default 1 hour)
+   * @param {Object} rawContent           Initial content
+   * @param {String} opts.storageKey      localStorage key
+   * @param {Number} opts.ttl             cache time to live in ms (defaults to 1 hour)
    */
   constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
     this.storageKey = opts.storageKey || 'wurdContent';
-    this.maxAge = opts.maxAge ?? 3600000;
+    this.ttl = opts.ttl ?? 3600000;
   }
 
   /**
@@ -26,41 +26,61 @@ export default class Store {
   /**
    * Load top-level sections of content from localStorage
    *
-   * @param {String[]} sectionNames
+   * @param {String[]} sectionNames Names of top-level content sections to load e.g. ['main','nav']
+   *    Unused here but likely to be used in future/other Store implementation
+   * @param {Object} [options]
+   * @param {String} [options.lang] Language
    * @return {Object} content
    */
-  load(sectionNames) {
-    try {
-      const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+  load(sectionNames, { lang } = {}) {
+    const { rawContent, storageKey, ttl } = this;
 
-      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) {
-        return this.rawContent;
+    try {
+      // Find cached content
+      const cachedContent = JSON.parse(localStorage.getItem(storageKey));
+      const metaData = cachedContent && cachedContent._wurd;
+
+      // Check if it has expired
+      if (!cachedContent || !metaData || (metaData.savedAt + ttl) < Date.now()) {
+        return rawContent;
       }
 
-      delete cachedContent['_expiry'];
+      // Check it's in the correct language
+      if (metaData.lang !== lang) {
+        return rawContent;
+      }
 
-      Object.assign(this.rawContent, cachedContent);
+      // Remove metadata
+      delete cachedContent['_wurd'];
 
-      return this.rawContent;
+      // Add cached content to memory content
+      Object.assign(rawContent, cachedContent);
+
+      return rawContent;
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
 
-      return this.rawContent;
+      return rawContent;
     }
   }
 
   /**
    * Save top-level sections of content to localStorage
    *
-   * @param {Object} content
+   * @param {Object} sections
    * @param {Boolean} [options.cache] Whether to save the content to cache
    */
-  save(content) {
-    Object.assign(this.rawContent, content);
+  save(sections, { lang } = {}) {
+    const { rawContent, storageKey } = this;
 
-    localStorage.setItem(this.storageKey, JSON.stringify({
-      ...this.rawContent,
-      _expiry: Date.now() + this.maxAge,
+    Object.assign(rawContent, sections);
+
+    localStorage.setItem(storageKey, JSON.stringify({
+      ...rawContent,
+      _wurd: {
+        savedAt: Date.now(),
+        lang,
+      },
     }));
   }
 

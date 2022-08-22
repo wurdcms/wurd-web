@@ -87,17 +87,18 @@ describe('store', function() {
         a: { a: 'AA' },
       }, {
         storageKey: 'customKey',
+        ttl: 10_000,
       });
     });
 
     it('loads from localStorage into the memory store', function () {
-      const expiry = Date.now() + 1000;
-
       global.localStorage.getItem.withArgs('customKey').returns(JSON.stringify({
         a: { a: 'AA' },
         b: { a: 'BA' },
         c: { a: 'CA' },
-        _expiry: expiry,
+        _wurd: {
+          savedAt: Date.now() - 9_000, // Not expired yet
+        },
       }));
 
       // Returns the content
@@ -126,11 +127,44 @@ describe('store', function() {
     it('returns memory content if localStorage has expired', function () {
       global.localStorage.getItem.returns(JSON.stringify({
         b: { a: 'BA' },
-        _expiry: new Date() - 10000,
+        _wurd: {
+          savedAt: new Date() - 11_000, // expired
+        },
       }));
 
       test.deepEqual(store.load(), {
         a: { a: 'AA' },
+      });
+    });
+
+    describe('with lang option', function () {
+      it('returns memory content if localStorage is in a different language', function () {
+        global.localStorage.getItem.returns(JSON.stringify({
+          b: { a: 'BA' },
+          _wurd: {
+            lang: 'es',
+            savedAt: new Date(),
+          },
+        }));
+  
+        test.deepEqual(store.load([], { lang: 'en' }), {
+          a: { a: 'AA' },
+        });
+      });
+
+      it('loads from localStorage if in the correct language', function () {
+        global.localStorage.getItem.returns(JSON.stringify({
+          b: { a: 'BA' },
+          _wurd: {
+            lang: 'es',
+            savedAt: new Date(),
+          },
+        }));
+  
+        test.deepEqual(store.load([], { lang: 'es' }), {
+          a: { a: 'AA' },
+          b: { a: 'BA' },
+        });
       });
     });
   });
@@ -146,7 +180,7 @@ describe('store', function() {
         c: { a: 'CA' },
       }, {
         storageKey: 'customKey',
-        maxAge: 360000,
+        ttl: 360000,
       });
 
       sinon.useFakeTimers(1234);
@@ -156,7 +190,7 @@ describe('store', function() {
       store.save({
         a: { a: 'AA2', b: 'AB2' },
         c: { a: 'CA2', b: 'CB2' },
-      });
+      }, { lang: 'es' });
 
       test.deepEqual(store.rawContent, {
         a: { a: 'AA2', b: 'AB2' },
@@ -170,7 +204,10 @@ describe('store', function() {
         a: { a: 'AA2', b: 'AB2' },
         b: { a: 'BA' },
         c: { a: 'CA2', b: 'CB2' },
-        _expiry: 361234, // maxAge + sinon.fakeTimer value
+        _wurd: {
+          savedAt: 1234, // sinon.fakeTimer value
+          lang: 'es',
+        },
       }));
     });
   });
