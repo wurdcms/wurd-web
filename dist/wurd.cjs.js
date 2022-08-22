@@ -1,7 +1,5 @@
 'use strict';
 
-var marked = require('marked');
-
 /**
  * @param {Object} data
  *
@@ -34,14 +32,14 @@ function replaceVars(text, vars = {}) {
 class Store {
 
   /**
-   * @param {Object} rawContent            Initial content
-   * @param {String} opts.storageKey       localStorage key
-   * @param {Number} opts.maxAge           cache max-age in ms
+   * @param {Object} rawContent           Initial content
+   * @param {String} opts.storageKey      localStorage key
+   * @param {Number} opts.ttl             cache time to live in ms (defaults to 1 hour)
    */
   constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
-    this.storageKey = opts.storageKey || 'cmsContent';
-    this.maxAge = opts.maxAge ?? 3600000;
+    this.storageKey = opts.storageKey || 'wurdContent';
+    this.ttl = opts.ttl ?? 3600000;
   }
 
   /**
@@ -57,33 +55,71 @@ class Store {
   }
 
   /**
-   * Load content from localStorage
+   * Load top-level sections of content from localStorage
    *
-   * @return {Object}
+   * @param {String[]} sectionNames Names of top-level content sections to load e.g. ['main','nav']
+   *    Unused here but likely to be used in future/other Store implementation
+   * @param {Object} [options]
+   * @param {String} [options.lang] Language
+   * @return {Object} content
    */
-  load() {
+  load(sectionNames, { lang } = {}) {
+    const { rawContent, storageKey, ttl } = this;
+
     try {
-      const cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
+      // Find cached content
+      const cachedContent = JSON.parse(localStorage.getItem(storageKey));
+      const metaData = cachedContent && cachedContent._wurd;
 
-      if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
+      // Check if it has expired
+      if (!cachedContent || !metaData || (metaData.savedAt + ttl) < Date.now()) {
+        return rawContent;
+      }
 
-      return { ...cachedContent, ...this.rawContent };
+      // Check it's in the correct language
+      if (metaData.lang !== lang) {
+        return rawContent;
+      }
+
+      // Remove metadata
+      delete cachedContent['_wurd'];
+
+      // Add cached content to memory content
+      Object.assign(rawContent, cachedContent);
+
+      return rawContent;
     } catch (err) {
       console.error('Wurd: error loading cache:', err);
 
-      return this.rawContent;
+      return rawContent;
     }
   }
 
   /**
-   * Save content in cache
+   * Save top-level sections of content to localStorage
    *
-   * @param {Object} content
+   * @param {Object} sections
+   * @param {Boolean} [options.cache] Whether to save the content to cache
    */
-  set(content) {
-    Object.assign(this.rawContent, content);
+  save(sections, { lang } = {}) {
+    const { rawContent, storageKey } = this;
 
-    localStorage.setItem(this.storageKey, JSON.stringify({ ...this.rawContent, _expiry: Date.now() + this.maxAge }));
+    Object.assign(rawContent, sections);
+
+    localStorage.setItem(storageKey, JSON.stringify({
+      ...rawContent,
+      _wurd: {
+        savedAt: Date.now(),
+        lang,
+      },
+    }));
+  }
+
+  /**
+   * Clears the localStorage cache
+   */
+  clear() {
+    localStorage.removeItem(this.storageKey);
   }
 
 }
@@ -188,13 +224,18 @@ class Block {
    * @return {Mixed}
    */
   markdown(path, vars, opts) {
+    const { parse, parseInline } = this.wurd.markdown;
     const text = this.text(path, vars);
 
-    if (opts?.inline && marked.marked.parseInline) {
-      return marked.marked.parseInline(text);
+    if (opts?.inline && parseInline) {
+      return parseInline(text);
     }
 
-    return marked.marked.parse(text);
+    if (parse) {
+      return parse(text);
+    }
+
+    return text;
   }
 
   /**
@@ -308,10 +349,9 @@ const API_URL = 'https://api.wurd.io';
 class Wurd {
   /**
    * @param {String} appName
-   * @param {String} [options.storageKey='cmsContent']         localStorage key for caching content
    */
-  constructor(appName, options) {
-    this.store = new Store(options && options.storageKey);
+  constructor(appName, options = {}) {
+    this.store = new Store();
     this.content = new Block(this, null);
 
     // Add block shortcut methods to the main Wurd instance
@@ -329,10 +369,13 @@ class Wurd {
    *
    * @param {String} appName
    * @param {Object} [options]
-   * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
-   * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
-   * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
-   * @param {Object} [options.rawContent]         Content to populate the store with
+   * @param {Boolean} [options.lang] Specific language to use
+   * @param {Boolean|String} [options.editMode] Options for enabling edit mode: `true` or `'querystring'`
+   * @param {Boolean} [options.draft] If true, loads draft content; otherwise loads published content
+   * @param {Object} [options.markdown] Enable markdown parsing. Works directly with `marked` npm package
+   *                                    or an object of shape {parse: Function, parseInline: Function}
+   * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
+   * @param {Object} [options.rawContent] Content to populate the store with
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -341,7 +384,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'debug'].forEach(name => {
+    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;
@@ -363,8 +406,11 @@ class Wurd {
     }
 
     if (options.rawContent) {
-      this.store.set(options.rawContent);
+      this.store.save(options.rawContent, { lang: options.lang });
     }
+
+    if (options.storageKey) this.store.storageKey = options.storageKey;
+    if (options.ttl) this.store.ttl = options.ttl;
 
     if (options.blockHelpers) {
       this.setBlockHelpers(options.blockHelpers);
@@ -379,7 +425,7 @@ class Wurd {
    * @param {String|Array<String>} sectionNames     Top-level sections to load e.g. `main,home`
    */
   load(sectionNames) {
-    const {app, store, editMode, debug} = this;
+    const {app, store, lang, editMode, debug} = this;
 
     if (!app) {
       return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
@@ -388,33 +434,46 @@ class Wurd {
     // Normalise string sectionNames to array
     const sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames;
 
+    // When in editMode we skip the cache completely
+    if (editMode) {
+      return this._fetchSections(sections)
+        .then(result => {
+          store.save(result, { lang });
+
+          // Clear the cache so changes are reflected immediately when out of editMode
+          store.clear();
+
+          return this.content;
+        });
+    }
+
     // Check for cached sections
-    const cachedContent = store.load();
+    const cachedContent = store.load(sections, { lang });
 
     const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
 
     if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
 
     // Return now if all content was in cache
-    if (!editMode && uncachedSections.length === 0) {
+    if (uncachedSections.length === 0) {
       return Promise.resolve(this.content);
     }
 
-    // Some sections not in cache; fetch them from server
-    if (debug) console.info('Wurd: from server:', uncachedSections);
-
+    // Otherwise fetch remaining sections
     return this._fetchSections(uncachedSections)
-      .then(fetchedContent => {
+      .then(result => {
         // Cache for next time
-        store.set(fetchedContent);
+        store.save(result, { lang });
 
-        // Return the main Block instance for using content
         return this.content;
       });
   }
 
   _fetchSections(sectionNames) {
-    const {app} = this;
+    const {app, debug} = this;
+
+    // Some sections not in cache; fetch them from server
+    if (debug) console.info('Wurd: from server:', sectionNames);
 
     // Build request URL
     const params = ['draft', 'lang'].reduce((memo, param) => {

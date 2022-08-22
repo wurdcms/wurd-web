@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('marked')) :
-  typeof define === 'function' && define.amd ? define(['marked'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory(global.marked));
-})(this, (function (marked) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.wurd = factory());
+})(this, (function () { 'use strict';
 
   function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
@@ -101,12 +101,12 @@
 
   var Store = /*#__PURE__*/function () {
     /**
-     * @param {Object} rawContent            Initial content
-     * @param {String} opts.storageKey       localStorage key
-     * @param {Number} opts.maxAge           cache max-age in ms
+     * @param {Object} rawContent           Initial content
+     * @param {String} opts.storageKey      localStorage key
+     * @param {Number} opts.ttl             cache time to live in ms (defaults to 1 hour)
      */
     function Store() {
-      var _opts$maxAge;
+      var _opts$ttl;
 
       var rawContent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -114,8 +114,8 @@
       _classCallCheck(this, Store);
 
       this.rawContent = rawContent;
-      this.storageKey = opts.storageKey || 'cmsContent';
-      this.maxAge = (_opts$maxAge = opts.maxAge) !== null && _opts$maxAge !== void 0 ? _opts$maxAge : 3600000;
+      this.storageKey = opts.storageKey || 'wurdContent';
+      this.ttl = (_opts$ttl = opts.ttl) !== null && _opts$ttl !== void 0 ? _opts$ttl : 3600000;
     }
     /**
      * Get a specific piece of content, top-level or nested
@@ -134,36 +134,80 @@
         }, this.rawContent);
       }
       /**
-       * Load content from localStorage
+       * Load top-level sections of content from localStorage
        *
-       * @return {Object}
+       * @param {String[]} sectionNames Names of top-level content sections to load e.g. ['main','nav']
+       *    Unused here but likely to be used in future/other Store implementation
+       * @param {Object} [options]
+       * @param {String} [options.lang] Language
+       * @return {Object} content
        */
 
     }, {
       key: "load",
-      value: function load() {
+      value: function load(sectionNames) {
+        var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+            lang = _ref.lang;
+
+        var rawContent = this.rawContent,
+            storageKey = this.storageKey,
+            ttl = this.ttl;
+
         try {
-          var cachedContent = JSON.parse(localStorage.getItem(this.storageKey));
-          if (!cachedContent || !cachedContent._expiry || cachedContent._expiry < Date.now()) return this.rawContent;
-          return _objectSpread2(_objectSpread2({}, cachedContent), this.rawContent);
+          // Find cached content
+          var cachedContent = JSON.parse(localStorage.getItem(storageKey));
+          var metaData = cachedContent && cachedContent._wurd; // Check if it has expired
+
+          if (!cachedContent || !metaData || metaData.savedAt + ttl < Date.now()) {
+            return rawContent;
+          } // Check it's in the correct language
+
+
+          if (metaData.lang !== lang) {
+            return rawContent;
+          } // Remove metadata
+
+
+          delete cachedContent['_wurd']; // Add cached content to memory content
+
+          Object.assign(rawContent, cachedContent);
+          return rawContent;
         } catch (err) {
           console.error('Wurd: error loading cache:', err);
-          return this.rawContent;
+          return rawContent;
         }
       }
       /**
-       * Save content in cache
+       * Save top-level sections of content to localStorage
        *
-       * @param {Object} content
+       * @param {Object} sections
+       * @param {Boolean} [options.cache] Whether to save the content to cache
        */
 
     }, {
-      key: "set",
-      value: function set(content) {
-        Object.assign(this.rawContent, content);
-        localStorage.setItem(this.storageKey, JSON.stringify(_objectSpread2(_objectSpread2({}, this.rawContent), {}, {
-          _expiry: Date.now() + this.maxAge
+      key: "save",
+      value: function save(sections) {
+        var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+            lang = _ref2.lang;
+
+        var rawContent = this.rawContent,
+            storageKey = this.storageKey;
+        Object.assign(rawContent, sections);
+        localStorage.setItem(storageKey, JSON.stringify(_objectSpread2(_objectSpread2({}, rawContent), {}, {
+          _wurd: {
+            savedAt: Date.now(),
+            lang: lang
+          }
         })));
+      }
+      /**
+       * Clears the localStorage cache
+       */
+
+    }, {
+      key: "clear",
+      value: function clear() {
+        localStorage.removeItem(this.storageKey);
       }
     }]);
 
@@ -277,13 +321,20 @@
     }, {
       key: "markdown",
       value: function markdown(path, vars, opts) {
+        var _this$wurd$markdown = this.wurd.markdown,
+            parse = _this$wurd$markdown.parse,
+            parseInline = _this$wurd$markdown.parseInline;
         var text = this.text(path, vars);
 
-        if (opts !== null && opts !== void 0 && opts.inline && marked.marked.parseInline) {
-          return marked.marked.parseInline(text);
+        if (opts !== null && opts !== void 0 && opts.inline && parseInline) {
+          return parseInline(text);
         }
 
-        return marked.marked.parse(text);
+        if (parse) {
+          return parse(text);
+        }
+
+        return text;
       }
       /**
        * Iterates over a collection / list object with the given callback.
@@ -398,14 +449,15 @@
   var Wurd = /*#__PURE__*/function () {
     /**
      * @param {String} appName
-     * @param {String} [options.storageKey='cmsContent']         localStorage key for caching content
      */
-    function Wurd(appName, options) {
+    function Wurd(appName) {
       var _this = this;
+
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       _classCallCheck(this, Wurd);
 
-      this.store = new Store(options && options.storageKey);
+      this.store = new Store();
       this.content = new Block(this, null); // Add block shortcut methods to the main Wurd instance
 
       var methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this.content));
@@ -419,10 +471,13 @@
      *
      * @param {String} appName
      * @param {Object} [options]
-     * @param {Boolean|String} [options.editMode]   Options for enabling edit mode: `true` or `'querystring'`
-     * @param {Boolean} [options.draft]             If true, loads draft content; otherwise loads published content
-     * @param {Object} [options.blockHelpers]       Functions to help accessing content and creating editable regions
-     * @param {Object} [options.rawContent]         Content to populate the store with
+     * @param {Boolean} [options.lang] Specific language to use
+     * @param {Boolean|String} [options.editMode] Options for enabling edit mode: `true` or `'querystring'`
+     * @param {Boolean} [options.draft] If true, loads draft content; otherwise loads published content
+     * @param {Object} [options.markdown] Enable markdown parsing. Works directly with `marked` npm package
+     *                                    or an object of shape {parse: Function, parseInline: Function}
+     * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
+     * @param {Object} [options.rawContent] Content to populate the store with
      */
 
 
@@ -436,7 +491,7 @@
         this.draft = false;
         this.editMode = false; // Set allowed options
 
-        ['draft', 'lang', 'debug'].forEach(function (name) {
+        ['draft', 'lang', 'markdown', 'debug'].forEach(function (name) {
           var val = options[name];
           if (typeof val !== 'undefined') _this2[name] = val;
         }); // Activate edit mode if required
@@ -457,8 +512,13 @@
         }
 
         if (options.rawContent) {
-          this.store.set(options.rawContent);
+          this.store.save(options.rawContent, {
+            lang: options.lang
+          });
         }
+
+        if (options.storageKey) this.store.storageKey = options.storageKey;
+        if (options.ttl) this.store.ttl = options.ttl;
 
         if (options.blockHelpers) {
           this.setBlockHelpers(options.blockHelpers);
@@ -479,6 +539,7 @@
 
         var app = this.app,
             store = this.store,
+            lang = this.lang,
             editMode = this.editMode,
             debug = this.debug;
 
@@ -487,9 +548,23 @@
         } // Normalise string sectionNames to array
 
 
-        var sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames; // Check for cached sections
+        var sections = typeof sectionNames === 'string' ? sectionNames.split(',') : sectionNames; // When in editMode we skip the cache completely
 
-        var cachedContent = store.load();
+        if (editMode) {
+          return this._fetchSections(sections).then(function (result) {
+            store.save(result, {
+              lang: lang
+            }); // Clear the cache so changes are reflected immediately when out of editMode
+
+            store.clear();
+            return _this3.content;
+          });
+        } // Check for cached sections
+
+
+        var cachedContent = store.load(sections, {
+          lang: lang
+        });
         var uncachedSections = sections.filter(function (section) {
           return cachedContent[section] === undefined;
         });
@@ -497,16 +572,16 @@
           return cachedContent[section] !== undefined;
         })); // Return now if all content was in cache
 
-        if (!editMode && uncachedSections.length === 0) {
+        if (uncachedSections.length === 0) {
           return Promise.resolve(this.content);
-        } // Some sections not in cache; fetch them from server
+        } // Otherwise fetch remaining sections
 
 
-        if (debug) console.info('Wurd: from server:', uncachedSections);
-        return this._fetchSections(uncachedSections).then(function (fetchedContent) {
+        return this._fetchSections(uncachedSections).then(function (result) {
           // Cache for next time
-          store.set(fetchedContent); // Return the main Block instance for using content
-
+          store.save(result, {
+            lang: lang
+          });
           return _this3.content;
         });
       }
@@ -515,7 +590,10 @@
       value: function _fetchSections(sectionNames) {
         var _this4 = this;
 
-        var app = this.app; // Build request URL
+        var app = this.app,
+            debug = this.debug; // Some sections not in cache; fetch them from server
+
+        if (debug) console.info('Wurd: from server:', sectionNames); // Build request URL
 
         var params = ['draft', 'lang'].reduce(function (memo, param) {
           if (_this4[param]) memo[param] = _this4[param];
