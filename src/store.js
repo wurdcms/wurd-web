@@ -1,10 +1,14 @@
 export default class Store {
 
   /**
-   * @param {Object} rawContent       Initial content
+   * @param {Object} rawContent           Initial content
+   * @param {String} opts.storageKey      localStorage key
+   * @param {Number} opts.ttl             cache time to live in ms (defaults to 1 hour)
    */
-  constructor(rawContent = {}) {
+  constructor(rawContent = {}, opts = {}) {
     this.rawContent = rawContent;
+    this.storageKey = opts.storageKey || 'wurdContent';
+    this.ttl = opts.ttl ?? 3600000;
   }
 
   /**
@@ -20,24 +24,71 @@ export default class Store {
   }
 
   /**
-   * Load top-level sections of content
+   * Load top-level sections of content from localStorage
    *
-   * @param {String[]} sectionNames
-   * @return {Object}
+   * @param {String[]} sectionNames Names of top-level content sections to load e.g. ['main','nav']
+   *    Unused here but likely to be used in future/other Store implementation
+   * @param {Object} [options]
+   * @param {String} [options.lang] Language
+   * @return {Object} content
    */
-  getSections(sectionNames) {
-    const entries = sectionNames.map(key => [key, this.rawContent[key]]);
+  load(sectionNames, { lang } = {}) {
+    const { rawContent, storageKey, ttl } = this;
 
-    return Object.fromEntries(entries);
+    try {
+      // Find cached content
+      const cachedContent = JSON.parse(localStorage.getItem(storageKey));
+      const metaData = cachedContent && cachedContent._wurd;
+
+      // Check if it has expired
+      if (!cachedContent || !metaData || (metaData.savedAt + ttl) < Date.now()) {
+        return rawContent;
+      }
+
+      // Check it's in the correct language
+      if (metaData.lang !== lang) {
+        return rawContent;
+      }
+
+      // Remove metadata
+      delete cachedContent['_wurd'];
+
+      // Add cached content to memory content
+      Object.assign(rawContent, cachedContent);
+
+      return rawContent;
+    } catch (err) {
+      console.error('Wurd: error loading cache:', err);
+
+      return rawContent;
+    }
   }
 
   /**
-   * Save top-levle sections of content
+   * Save top-level sections of content to localStorage
    *
-   * @param {Object} sections       Top level sections of content
+   * @param {Object} sections
+   * @param {Boolean} [options.cache] Whether to save the content to cache
    */
-  setSections(sections) {
-    Object.assign(this.rawContent, sections);
+  save(sections, { lang } = {}) {
+    const { rawContent, storageKey } = this;
+
+    Object.assign(rawContent, sections);
+
+    localStorage.setItem(storageKey, JSON.stringify({
+      ...rawContent,
+      _wurd: {
+        savedAt: Date.now(),
+        lang,
+      },
+    }));
+  }
+
+  /**
+   * Clears the localStorage cache
+   */
+  clear() {
+    localStorage.removeItem(this.storageKey);
   }
 
 };

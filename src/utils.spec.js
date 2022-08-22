@@ -18,7 +18,7 @@ describe('utils', function() {
       same(replaceVars('Hello {{name}}!', { name: 'Bob' }), 'Hello Bob!');
     });
 
-    it('removes placeholders without a valuee', function () {
+    it('removes placeholders without a value', function () {
       const result = replaceVars('Hello {{firstName}} {{lastName}}!', {
         firstName: undefined,
         lastName: 'Smith',

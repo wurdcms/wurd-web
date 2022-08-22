@@ -9,6 +9,7 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "test": "mocha --require @babel/register --colors ./src/*.spec.js",
+    "test-file": "mocha --require @babel/register --colors -w",
     "test:watch": "mocha --require @babel/register --colors -w ./src/*.spec.js",
     "example": "serve examples/simple"
   },

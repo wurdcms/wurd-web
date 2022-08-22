@@ -14,71 +14,52 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body class="container">
-    <img data-wurd-img="home.heroImage" style="width: 100%" />
-
-    <h2 data-wurd="home.welcome.title"></h2>
-
+    <div id="main"></div>
 
     <script>
-      var preConnectBlock = wurd.block('home');
-
       wurd.connect('example', {
-        // Optionally specify a markdown parser
-        markdown: marked,
-
-        //Turn edit mode on when `?edit` is added to the page URL
+        // Turn edit mode on when `?edit` is added to the page URL
         editMode: 'querystring',
+
+        // Enable markdown
+        markdown: marked,
         
-        //Define helpers to create editable regions etc.
-        blockHelpers: {
-          insertEl: function(type, id, vars, options) {
-            var el = document.createElement(type);
-
-            el.innerHTML = this.el(id, vars, options);
-
-            document.body.appendChild(el);
-          }
-        },
+        // Switch language when ?lang=es is added to the URL
+        lang: new URLSearchParams(window.location.search).get('lang'),
 
         debug: true,
+        ttl: 10_000,
       });
 
       wurd.load('nav,home')
-        .catch(function(err) { console.error(err) })
         .then(function(cms) {
-          //The cms object provides access to all loaded content
+          // The cms object provides access to all loaded content
           document.title = cms.text('home.title');
 
-          //Create blocks for easier access to child content
+          // Create blocks for easier access to child content
+          var nav = cms.block('nav');
           var page = cms.block('home');
 
-          //You can add content to existing elements
-          document.querySelector('[data-wurd-img="home.heroImage"]').src = page.text('heroImage');
+          // Use the Block helpers to add editable content to the page
+          document.getElementById('main').innerHTML = `
+            <nav class="navbar navbar-default container-fluid">
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="/?lang=en">${nav.el('english')}</a></li>
+                <li><a href="/?lang=es">${nav.el('spanish')}</a></li>
+              </ul>
+            </nav>
 
-          document.querySelectorAll('[data-wurd]').forEach(function(el) {
-            el.innerText = cms.text(el.dataset.wurd);
-          });
-          
-          //Or use helpers to create them for you
-          page.insertEl('p', 'welcome.intro', { name: 'John' });
+            <img
+              src="${page.text('heroImage')}"
+              data-wurd-img="${page.id('heroImage')}"
+              style="width: 100%"
+            />
 
-          page.insertEl('div', 'welcome.markdown', {
-            date: (new Date()).toLocaleString()
-          }, {markdown: true});
+            <h2>${page.el('title')}</h2>
+            <p>${page.el('welcome.intro', { name: 'John' })}</p>
 
-
-
-
-
-          // ADVANCED USE
-          // Use blocks created before .connect() and load() were called
-          console.log(preConnectBlock.text('title'));
-
-          // Object destructuring allows for the shortest getters.
-          var {text, insertEl} = cms.block('home');
-          
-          console.log(text('footer'));
-          insertEl('footer', 'footer');
+            ${page.el('welcome.markdown', { date: (new Date()).toLocaleDateString() }, { markdown: true })}
+          `;
         });
     </script>
   </body>
