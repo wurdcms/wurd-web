@@ -478,6 +478,7 @@
      *                                    or an object of shape {parse: Function, parseInline: Function}
      * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
      * @param {Object} [options.rawContent] Content to populate the store with
+     * @param {Function} [options.onLoad] Callback that runs whenever load() completes. Signature: onLoad(content) => {}
      */
 
 
@@ -491,7 +492,7 @@
         this.draft = false;
         this.editMode = false; // Set allowed options
 
-        ['draft', 'lang', 'markdown', 'debug'].forEach(function (name) {
+        ['draft', 'lang', 'markdown', 'debug', 'onLoad'].forEach(function (name) {
           var val = options[name];
           if (typeof val !== 'undefined') _this2[name] = val;
         }); // Activate edit mode if required
@@ -581,7 +582,10 @@
           // Cache for next time
           store.save(result, {
             lang: lang
-          });
+          }); // Call registerd onLoad() callback
+
+          if (_this3.onLoad) _this3.onLoad(_this3.content); // Return for any function waiting directly on this promise
+
           return _this3.content;
         });
       }

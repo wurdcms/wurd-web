@@ -374,6 +374,7 @@ class Wurd {
    *                                    or an object of shape {parse: Function, parseInline: Function}
    * @param {Object} [options.blockHelpers] Functions to help accessing content and creating editable regions
    * @param {Object} [options.rawContent] Content to populate the store with
+   * @param {Function} [options.onLoad] Callback that runs whenever load() completes. Signature: onLoad(content) => {}
    */
   connect(appName, options = {}) {
     this.app = appName;
@@ -382,7 +383,7 @@ class Wurd {
     this.editMode = false;
 
     // Set allowed options
-    ['draft', 'lang', 'markdown', 'debug'].forEach(name => {
+    ['draft', 'lang', 'markdown', 'debug', 'onLoad'].forEach(name => {
       const val = options[name];
 
       if (typeof val !== 'undefined') this[name] = val;
@@ -463,6 +464,10 @@ class Wurd {
         // Cache for next time
         store.save(result, { lang });
 
+        // Call registerd onLoad() callback
+        if (this.onLoad) this.onLoad(this.content);
+
+        // Return for any function waiting directly on this promise
         return this.content;
       });
   }
