@@ -192,6 +192,21 @@ describe('Wurd', function() {
           done();
         }).catch(done);
     });
+
+    it('calls onLoad callback if defined', function (done) {
+      client.onLoad = sinon.stub();
+
+      same(client.onLoad.callCount, 0);
+
+      client.load(['home', 'nav'])
+        .then((content) => {
+          same(client.onLoad.callCount, 1);
+          same(client.onLoad.args[0][0], content);
+
+          done();
+        })
+        .catch(done);
+    });
   });
 
 

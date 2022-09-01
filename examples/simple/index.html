@@ -27,8 +27,10 @@
         // Switch language when ?lang=es is added to the URL
         lang: new URLSearchParams(window.location.search).get('lang'),
 
+        // Other options
         debug: true,
         ttl: 10_000,
+        onLoad: (content) => console.log(content.text('home.title')),
       });
 
       wurd.load('nav,home')
