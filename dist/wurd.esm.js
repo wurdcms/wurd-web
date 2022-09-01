@@ -424,7 +424,7 @@ class Wurd {
    * @param {String|Array<String>} sectionNames     Top-level sections to load e.g. `main,home`
    */
   load(sectionNames) {
-    const {app, store, lang, editMode, debug} = this;
+    const {app, store, lang, editMode, debug, onLoad, content} = this;
 
     if (!app) {
       return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
@@ -442,7 +442,10 @@ class Wurd {
           // Clear the cache so changes are reflected immediately when out of editMode
           store.clear();
 
-          return this.content;
+          // Pass main content Block to callbacks
+          if (onLoad) onLoad(content);
+
+          return content;
         });
     }
 
@@ -455,7 +458,10 @@ class Wurd {
 
     // Return now if all content was in cache
     if (uncachedSections.length === 0) {
-      return Promise.resolve(this.content);
+      // Pass main content Block to callbacks
+      if (onLoad) onLoad(content);
+
+      return Promise.resolve(content);
     }
 
     // Otherwise fetch remaining sections
@@ -464,11 +470,10 @@ class Wurd {
         // Cache for next time
         store.save(result, { lang });
 
-        // Call registerd onLoad() callback
-        if (this.onLoad) this.onLoad(this.content);
+        // Pass main content Block to callbacks
+        if (onLoad) onLoad(content);
 
-        // Return for any function waiting directly on this promise
-        return this.content;
+        return content;
       });
   }
 

@@ -536,13 +536,13 @@
     }, {
       key: "load",
       value: function load(sectionNames) {
-        var _this3 = this;
-
         var app = this.app,
             store = this.store,
             lang = this.lang,
             editMode = this.editMode,
-            debug = this.debug;
+            debug = this.debug,
+            onLoad = this.onLoad,
+            content = this.content;
 
         if (!app) {
           return Promise.reject(new Error('Use wurd.connect(appName) before wurd.load()'));
@@ -557,8 +557,10 @@
               lang: lang
             }); // Clear the cache so changes are reflected immediately when out of editMode
 
-            store.clear();
-            return _this3.content;
+            store.clear(); // Pass main content Block to callbacks
+
+            if (onLoad) onLoad(content);
+            return content;
           });
         } // Check for cached sections
 
@@ -574,7 +576,9 @@
         })); // Return now if all content was in cache
 
         if (uncachedSections.length === 0) {
-          return Promise.resolve(this.content);
+          // Pass main content Block to callbacks
+          if (onLoad) onLoad(content);
+          return Promise.resolve(content);
         } // Otherwise fetch remaining sections
 
 
@@ -582,17 +586,16 @@
           // Cache for next time
           store.save(result, {
             lang: lang
-          }); // Call registerd onLoad() callback
+          }); // Pass main content Block to callbacks
 
-          if (_this3.onLoad) _this3.onLoad(_this3.content); // Return for any function waiting directly on this promise
-
-          return _this3.content;
+          if (onLoad) onLoad(content);
+          return content;
         });
       }
     }, {
       key: "_fetchSections",
       value: function _fetchSections(sectionNames) {
-        var _this4 = this;
+        var _this3 = this;
 
         var app = this.app,
             debug = this.debug; // Some sections not in cache; fetch them from server
@@ -600,7 +603,7 @@
         if (debug) console.info('Wurd: from server:', sectionNames); // Build request URL
 
         var params = ['draft', 'lang'].reduce(function (memo, param) {
-          if (_this4[param]) memo[param] = _this4[param];
+          if (_this3[param]) memo[param] = _this3[param];
           return memo;
         }, {});
         var url = "".concat(API_URL, "/apps/").concat(app, "/content/").concat(sectionNames, "?").concat(encodeQueryString(params));
