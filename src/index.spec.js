@@ -65,6 +65,7 @@ describe('Wurd', function() {
     beforeEach(function () {
       client = wurd.connect('appname', {
         debug: true,
+        onLoad: sinon.stub(),
       });
 
       // Set cached content
@@ -100,13 +101,7 @@ describe('Wurd', function() {
     it('loads content from cache and server', function (done) {
       client.load(['lorem','ipsum','dolor','amet'])
         .then(content => {
-          test.deepEqual(content.get(), {
-            lorem: { title: 'Lorem' },
-            ipsum: { title: 'Ipsum' },
-            dolor: { title: 'Dolor' },
-            amet: { title: 'Amet' }
-          });
-
+          // Should only call to server for missing sections
           same(client._fetchSections.callCount, 1);
           test.deepEqual(client._fetchSections.args[0][0], ['ipsum', 'amet']);
           
@@ -115,6 +110,18 @@ describe('Wurd', function() {
             ['Wurd: from server:', ['ipsum', 'amet']],
           ]);
 
+          // Should return the main content Block
+          test.deepEqual(content.get(), {
+            lorem: { title: 'Lorem' },
+            ipsum: { title: 'Ipsum' },
+            dolor: { title: 'Dolor' },
+            amet: { title: 'Amet' }
+          });
+
+          // Should pass the main content Block to the onLoad() callback
+          same(client.onLoad.callCount, 1);
+          same(client.onLoad.args[0][0], content);
+
           done();
         }).catch(done);
     });
@@ -122,16 +129,22 @@ describe('Wurd', function() {
     it('does not fetch from server if all content is available', function (done) {
       client.load(['lorem', 'dolor'])
         .then(content => {
-          test.deepEqual(content.get(), {
-            lorem: { title: 'Lorem' },
-            dolor: { title: 'Dolor' },
-          });
-
+          // Should not call to server
           same(client._fetchSections.callCount, 0);
           
           test.deepEqual(console.info.args, [
             ['Wurd: from cache:', ['lorem', 'dolor']],
           ]);
+          
+          // Should return the main content Block
+          test.deepEqual(content.get(), {
+            lorem: { title: 'Lorem' },
+            dolor: { title: 'Dolor' },
+          });
+
+          // Should pass the main content Block to the onLoad() callback
+          same(client.onLoad.callCount, 1);
+          same(client.onLoad.args[0][0], content);
 
           done();
         }).catch(done);
@@ -172,13 +185,7 @@ describe('Wurd', function() {
       
       client.load(['lorem','ipsum','dolor','amet'])
         .then(content => {
-          test.deepEqual(content.get(), {
-            lorem: { title: 'Lorem' },
-            ipsum: { title: 'Ipsum' },
-            dolor: { title: 'Dolor' },
-            amet: { title: 'Amet' }
-          });
-
+          // Should call server for all sections
           same(client._fetchSections.callCount, 1);
           test.deepEqual(client._fetchSections.args[0][0], ['lorem', 'ipsum', 'dolor', 'amet']);
           
@@ -189,23 +196,20 @@ describe('Wurd', function() {
           // Should clear the cache so content is up to date when out of editMode again
           same(client.store.clear.callCount, 1);
 
-          done();
-        }).catch(done);
-    });
+          // Should return the main content Block
+          test.deepEqual(content.get(), {
+            lorem: { title: 'Lorem' },
+            ipsum: { title: 'Ipsum' },
+            dolor: { title: 'Dolor' },
+            amet: { title: 'Amet' }
+          });
 
-    it('calls onLoad callback if defined', function (done) {
-      client.onLoad = sinon.stub();
-
-      same(client.onLoad.callCount, 0);
-
-      client.load(['home', 'nav'])
-        .then((content) => {
+          // Should pass the main content Block to the onLoad() callback
           same(client.onLoad.callCount, 1);
           same(client.onLoad.args[0][0], content);
 
           done();
-        })
-        .catch(done);
+        }).catch(done);
     });
   });
 
