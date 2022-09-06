@@ -342,15 +342,14 @@ class Block {
 
 }
 
-const WIDGET_URL = 'https://widget.wurd.io/widget.js';
-const API_URL = 'https://api.wurd.io';
-
-
 class Wurd {
   /**
    * @param {String} appName
    */
   constructor(appName, options = {}) {
+    this.widgetUrl = 'https://widget.wurd.io/widget.js';
+    this.apiUrl = 'https://api.wurd.io';
+
     this.store = new Store();
     this.content = new Block(this, null);
 
@@ -492,7 +491,7 @@ class Wurd {
       return memo;
     }, {});
 
-    const url = `${API_URL}/apps/${app}/content/${sectionNames}?${encodeQueryString(params)}`;
+    const url = `${this.apiUrl}/apps/${app}/content/${sectionNames}?${encodeQueryString(params)}`;
 
     return this._fetch(url)
       .then(result => {
@@ -525,7 +524,7 @@ class Wurd {
 
     const script = document.createElement('script');
 
-    script.src = WIDGET_URL;
+    script.src = this.widgetUrl;
     script.async = true;
     script.setAttribute('data-app', app);
 
@@ -533,7 +532,7 @@ class Wurd {
       script.setAttribute('data-lang', lang);
     }
 
-    const prevScript = document.body.querySelector(`script[src="${WIDGET_URL}"]`);
+    const prevScript = document.body.querySelector(`script[src="${this.widgetUrl}"]`);
 
     if (prevScript) {
       document.body.removeChild(prevScript);
