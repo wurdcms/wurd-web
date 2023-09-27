@@ -118,29 +118,28 @@ class Wurd {
     // Check for cached sections
     const cachedContent = store.load(sections, { lang });
 
-    const uncachedSections = sections.filter(section => cachedContent[section] === undefined);
+    const uncachedSections = cachedContent._expired
+      ? sections
+      : sections.filter(section => cachedContent[section] === undefined);
 
     if (debug) console.info('Wurd: from cache:', sections.filter(section => cachedContent[section] !== undefined));
 
-    // Return now if all content was in cache
-    if (uncachedSections.length === 0) {
-      // Pass main content Block to callbacks
-      if (onLoad) onLoad(content);
 
-      return Promise.resolve(content);
-    }
-
-    // Otherwise fetch remaining sections
-    return this._fetchSections(uncachedSections)
+    // If missing sections, refetch in background
+    if (uncachedSections.length) {
+      this._fetchSections(uncachedSections)
       .then(result => {
         // Cache for next time
         store.save(result, { lang });
 
         // Pass main content Block to callbacks
-        if (onLoad) onLoad(content);
-
-        return content;
+        if (onLoad) onLoad(store.get());
       });
+    }
+
+    // Return content in all case
+    if (onLoad) onLoad(content);
+    return content;
   }
 
   _fetchSections(sectionNames) {
