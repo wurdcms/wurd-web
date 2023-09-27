@@ -40,14 +40,14 @@ export default class Store {
       const cachedContent = JSON.parse(localStorage.getItem(storageKey));
       const metaData = cachedContent && cachedContent._wurd;
 
-      // Check if it has expired
-      if (!cachedContent || !metaData || (metaData.savedAt + ttl) < Date.now()) {
+      // Check it's in the correct language
+      if (!cachedContent || !metaData || metaData.lang !== lang) {
         return rawContent;
       }
 
-      // Check it's in the correct language
-      if (metaData.lang !== lang) {
-        return rawContent;
+      // Check if it has expired
+      if ((metaData.savedAt + ttl) < Date.now()) {
+        rawContent._expired = true;
       }
 
       // Remove metadata

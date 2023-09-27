@@ -87,7 +87,8 @@ describe('Wurd', function() {
     });
 
     it('resolves the main content Block', function (done) {
-      client.load(['lorem', 'ipsum'])
+      Promise.resolve()
+        .then(() => client.load(['lorem', 'ipsum']))
         .then(content => {
           test.ok(content instanceof Block);
 
@@ -99,8 +100,9 @@ describe('Wurd', function() {
     });
 
     it('loads content from cache and server', function (done) {
-      client.load(['lorem','ipsum','dolor','amet'])
-        .then(content => {
+      Promise.resolve()
+        .then(() => client.load(['lorem','ipsum','dolor','amet']))
+        .then(async content => {
           // Should only call to server for missing sections
           same(client._fetchSections.callCount, 1);
           test.deepEqual(client._fetchSections.args[0][0], ['ipsum', 'amet']);
@@ -113,21 +115,31 @@ describe('Wurd', function() {
           // Should return the main content Block
           test.deepEqual(content.get(), {
             lorem: { title: 'Lorem' },
-            ipsum: { title: 'Ipsum' },
             dolor: { title: 'Dolor' },
-            amet: { title: 'Amet' }
           });
 
           // Should pass the main content Block to the onLoad() callback
           same(client.onLoad.callCount, 1);
           same(client.onLoad.args[0][0], content);
 
+          // wait another cycle
+          await new Promise(r => setTimeout(r, 2));
+
+          same(client.onLoad.callCount, 2);
+          test.deepStrictEqual(client.onLoad.args[1][0], {
+            lorem: { title: 'Lorem' },
+            dolor: { title: 'Dolor' },
+            ipsum: { title: 'Ipsum' },
+            amet: { title: 'Amet' }
+          });
+
           done();
         }).catch(done);
     });
 
     it('does not fetch from server if all content is available', function (done) {
-      client.load(['lorem', 'dolor'])
+      Promise.resolve()
+        .then(() => client.load(['lorem', 'dolor']))
         .then(content => {
           // Should not call to server
           same(client._fetchSections.callCount, 0);
@@ -151,10 +163,11 @@ describe('Wurd', function() {
     });
 
     it('works with an array of sectionNames', function (done) {
-      client.load(['lorem', 'ipsum'])
+      Promise.resolve()
+        .then(() => client.load(['lorem', 'ipsum']))
         .then(content => {
           test.deepEqual(content.get('lorem.title'), 'Lorem');
-          test.deepEqual(content.get('ipsum.title'), 'Ipsum');
+          test.deepEqual(content.get('ipsum.title'), undefined);
 
           test.deepEqual(console.info.args, [
             ['Wurd: from cache:', ['lorem']],
@@ -166,10 +179,11 @@ describe('Wurd', function() {
     })
 
     it('works with a comma separated string', function (done) {
-      client.load('dolor,amet')
+      Promise.resolve()
+        .then(() => client.load('dolor,amet'))
         .then(content => {
           test.deepEqual(content.get('dolor.title'), 'Dolor');
-          test.deepEqual(content.get('amet.title'), 'Amet');
+          test.deepEqual(content.get('amet.title'), undefined);
 
           test.deepEqual(console.info.args, [
             ['Wurd: from cache:', ['dolor']],

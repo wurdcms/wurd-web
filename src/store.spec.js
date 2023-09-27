@@ -124,7 +124,7 @@ describe('store', function() {
       });
     });
 
-    it('returns memory content if localStorage has expired', function () {
+    it('returns all content if localStorage has expired and add _expired flag', function () {
       global.localStorage.getItem.returns(JSON.stringify({
         b: { a: 'BA' },
         _wurd: {
@@ -134,6 +134,8 @@ describe('store', function() {
 
       test.deepEqual(store.load(), {
         a: { a: 'AA' },
+        b: { a: 'BA' },
+        _expired: true,
       });
     });
 
